@@ -12,11 +12,15 @@
   let url = $state<string>("");
   let currentStep = $state(1);
   
+  // Store tracking parameters to preserve across steps
+  let trackingParams = $state<string>("");
+  
   // Session data
   let sessionData = $state<any>(null);
   let sessionId = $state<string>('');
   let leadId = $state<string>('');
   let offerAds = $state<any[]>([]);
+  let sessionCookies = $state<string[]>([]);
   
   // Single incomplete form data support
   let savedFormData = $state<any>(null);
@@ -28,6 +32,15 @@
     const storedSessionId = localStorage.getItem('savemaxauto_session_id');
     if (storedSessionId) {
       sessionId = storedSessionId;
+    }
+
+    const storedCookies = localStorage.getItem('savemaxauto_cookies');
+    if (storedCookies) {
+      try {
+        sessionCookies = JSON.parse(storedCookies);
+      } catch (e) {
+        sessionCookies = [];
+      }
     }
 
     const storedFormData = localStorage.getItem('savemaxauto_incomplete_form');
@@ -94,13 +107,6 @@
   let frozenProgressStep = $state<number>(0); // Step number where progress was frozen
   let primaryDriverName = $state<string>(''); // Store first driver's name for contact info heading
   
-  // Affiliate tracking for SaveMaxAuto
-  let affiliateSource = $state<string>('');      // e.g., 'facebook', 'google', 'bing'
-  let affiliateKeyword = $state<string>('');     // e.g., 'cheap auto insurance'
-  let publisherClickId = $state<string>('');     // Publisher's unique click ID
-  let clientPublicKey = $state<string>('');      // Affiliate's public key
-  let remarketingCampaign = $state<string>('');  // Remarketing campaign ID
-  
   // API-loaded vehicle data
   let vehicleYears = $state<number[]>([]);
   let vehicleMakes = $state<any[]>([]);
@@ -138,16 +144,6 @@
 
     const zipNum = parseInt(zip);
 
-    // Reject all zeros
-    if (zipNum === 0 || zip === '00000') {
-      return false;
-    }
-
-    // Reject repeating digits (11111, 22222, 33333, etc.) - likely test data
-    if (/^(\d)\1{4}$/.test(zip)) {
-      return false;
-    }
-
     // Valid US ZIP code ranges (00501 to 99950)
     // Exclude invalid ranges
     if (zipNum < 501 || zipNum > 99950) {
@@ -158,19 +154,8 @@
     const prefix = zip.substring(0, 3);
     const firstTwo = zip.substring(0, 2);
 
-    // Known invalid or non-existent ZIP code prefixes (expanded list)
-    const invalidPrefixes = [
-      '095', '096', '097', '098', '099', // Invalid 09x range
-      '213', '269', // Invalid 2xx ranges
-      '343', '348', '353', // Invalid 3xx ranges
-      '419', '429', // Invalid 4xx ranges
-      '517', '518', '519', '529', '533', '536', '552', '568', '578', '579', '589', // Invalid 5xx ranges
-      '621', '632', '642', '643', '659', '663', '682', '694', '695', '696', '697', '698', '699', // Invalid 6xx ranges
-      '866', '867', '868', '869', // Invalid 86x range
-      '876', '877', '878', '879', // Invalid 87x range
-      '887', '888', '889', // Invalid 88x range
-      '896', '897', '898', '899' // Invalid 89x range
-    ];
+    // Known invalid or non-existent ZIP code prefixes
+    const invalidPrefixes = ['095', '096', '097', '098', '099', '213', '269', '343', '348', '353', '419', '429', '517', '518', '519', '529', '533', '536', '552', '568', '578', '579', '589', '621', '632', '642', '643', '659', '663', '682', '694', '695', '696', '697', '698', '699'];
 
     if (invalidPrefixes.includes(prefix)) {
       return false;
@@ -268,19 +253,10 @@
           payload: {
             redirectOrigin: 'https://s.civilcarcoverage.com/',
             refererUrl: 'https://savemaxauto.com/form/',
-            supportsCookies: true,
-            // Add affiliate data if available
-            ...(affiliateSource && {
-              affiliate: {
-                source: affiliateSource,
-                keyword: affiliateKeyword || null,
-                publisherClickId: publisherClickId || null,
-                clientPublicKey: clientPublicKey || null,
-                remarketingCampaign: remarketingCampaign || null
-              }
-            })
+            supportsCookies: true
           },
-          sessionId: sessionId || undefined
+          sessionId: sessionId || undefined,
+          cookies: sessionCookies
         })
       });
       const result = await response.json();
@@ -290,6 +266,12 @@
         // Store in localStorage
         localStorage.setItem('savemaxauto_session_id', sessionId);
         localStorage.setItem('savemaxauto_session_data', JSON.stringify(result.data));
+      }
+      
+      // Store cookies from response
+      if (result.cookies) {
+        sessionCookies = result.cookies;
+        localStorage.setItem('savemaxauto_cookies', JSON.stringify(sessionCookies));
       }
       
       return result.data;
@@ -302,7 +284,8 @@
   async function getSession() {
     try {
       const endpointUrl = `/api/v1/session`;
-      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}`);
+      const cookiesParam = encodeURIComponent(JSON.stringify(sessionCookies));
+      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}&cookies=${cookiesParam}`);
       const result = await response.json();
       
       if (result.success && result.data?.session) {
@@ -326,7 +309,8 @@
           endpoint: '/api/v1/auto-complete-zip',
           method: 'POST',
           payload: { zip },
-          sessionId
+          sessionId,
+          cookies: sessionCookies
         })
       });
       const result = await response.json();
@@ -339,6 +323,12 @@
         localStorage.setItem('savemaxauto_state', state);
       }
       
+      // Store cookies from response
+      if (result.cookies) {
+        sessionCookies = result.cookies;
+        localStorage.setItem('savemaxauto_cookies', JSON.stringify(sessionCookies));
+      }
+      
       return result.data;
     } catch (error) {
       console.error('Zip lookup error:', error);
@@ -349,7 +339,8 @@
   async function fetchVehicleYears() {
     try {
       const endpointUrl = `/api/v1/auto-insurance/lookup/year`;
-      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}`);
+      const cookiesParam = encodeURIComponent(JSON.stringify(sessionCookies));
+      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}&cookies=${cookiesParam}`);
       const result = await response.json();
       
       if (result.success && result.data?.years) {
@@ -370,7 +361,8 @@
   async function fetchVehicleMakes(year: string) {
     try {
       const endpointUrl = `/api/v1/auto-insurance/lookup/make?year=${year}`;
-      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}`);
+      const cookiesParam = encodeURIComponent(JSON.stringify(sessionCookies));
+      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}&cookies=${cookiesParam}`);
       const result = await response.json();
       
       if (result.success && result.data?.makes) {
@@ -388,7 +380,8 @@
   async function fetchVehicleModels(year: string, makeId: number) {
     try {
       const endpointUrl = `/api/v1/auto-insurance/lookup/model?year=${year}&makeId=${makeId}`;
-      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}`);
+      const cookiesParam = encodeURIComponent(JSON.stringify(sessionCookies));
+      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}&cookies=${cookiesParam}`);
       const result = await response.json();
       
       console.log('Models API response:', result);
@@ -434,7 +427,8 @@
   async function fetchVehicleTrims(modelId: number) {
     try {
       const endpointUrl = `/api/v1/auto-insurance/lookup/trim?modelId=${modelId}`;
-      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}`);
+      const cookiesParam = encodeURIComponent(JSON.stringify(sessionCookies));
+      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}&cookies=${cookiesParam}`);
       const result = await response.json();
       
       if (result.success && result.data?.trims) {
@@ -491,10 +485,10 @@
           collisionDeductible: "1000",
           comprehensiveDeductible: "1000",
           currentMileage: 50000,
-          make: vehicleMake,
-          model: vehicleModel,
+          make: vehicleMake ? { id: vehicleMake.id, name: vehicleMake.name } : null,
+          model: vehicleModel ? { id: vehicleModel.id, name: vehicleModel.name } : null,
           ownership: ownsVehicle === 'yes' ? 'OWN' : 'LEASE',
-          trim: selectedTrim,
+          trim: selectedTrim ? { id: selectedTrim.id, name: selectedTrim.name, vin: selectedTrim.vin } : null,
           usedFor: "COMMUTE_WORK",
           year: parseInt(vehicleYear)
         }],
@@ -539,7 +533,8 @@
           endpoint: '/api/v1/auto-insurance/submit',
           method: 'POST',
           payload,
-          sessionId
+          sessionId,
+          cookies: sessionCookies
         })
       });
       
@@ -556,6 +551,12 @@
         console.error('Submit failed or no leadId:', result);
       }
       
+      // Store cookies from response
+      if (result.cookies) {
+        sessionCookies = result.cookies;
+        localStorage.setItem('savemaxauto_cookies', JSON.stringify(sessionCookies));
+      }
+      
       return result.data;
     } catch (error) {
       console.error('Submit error:', error);
@@ -563,52 +564,13 @@
     }
   }
   
-  async function pollCheckStatus() {
-    const maxAttempts = 60; // Poll for up to 60 seconds
-    let attempts = 0;
-    
-    const pollInterval = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/savemaxauto/proxy?endpoint=/api/v1/check-status&sessionId=${sessionId}`);
-        const result = await response.json();
-        
-        console.log('Check-status response:', result);
-        
-        if (result.success && result.data?.status) {
-          const status = result.data.status;
-          
-          if (status === 'ACCEPTED' || status === 'REJECTED') {
-            clearInterval(pollInterval);
-            
-            if (result.data.leadId) {
-              leadId = result.data.leadId;
-              localStorage.setItem('savemaxauto_leadId', leadId);
-            }
-            
-            console.log('Final lead status:', status);
-            console.log('Final leadId:', leadId);
-            
-            // You can add UI updates here based on status
-            // For example, show different messages for ACCEPTED vs REJECTED
-          }
-        }
-        
-        attempts++;
-        if (attempts >= maxAttempts) {
-          clearInterval(pollInterval);
-          console.log('Check-status polling timeout after 60 seconds');
-        }
-      } catch (error) {
-        console.error('Check-status polling error:', error);
-      }
-    }, 1000); // Poll every 1 second
-  }
-  
   async function fetchOfferWall() {
     try {
       console.log('Fetching offer wall with sessionId:', sessionId);
-      const endpointUrl = `/api/v1/lp/ads`;
-      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}`);
+      console.log('Fetching offer wall with leadId:', leadId);
+      const endpointUrl = `/api/v1/lp/ads?leadId=${leadId}`;
+      const cookiesParam = encodeURIComponent(JSON.stringify(sessionCookies));
+      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}&cookies=${cookiesParam}`);
       const result = await response.json();
       
       console.log('Offer wall response:', result);
@@ -656,11 +618,6 @@
       email,
       phone,
       address,
-      affiliateSource,
-      affiliateKeyword,
-      publisherClickId,
-      clientPublicKey,
-      remarketingCampaign,
       currentStep,
       lastUpdated: new Date().toISOString()
     };
@@ -695,11 +652,6 @@
       email = savedFormData.email || '';
       phone = savedFormData.phone || '';
       address = savedFormData.address || '';
-      affiliateSource = savedFormData.affiliateSource || '';
-      affiliateKeyword = savedFormData.affiliateKeyword || '';
-      publisherClickId = savedFormData.publisherClickId || '';
-      clientPublicKey = savedFormData.clientPublicKey || '';
-      remarketingCampaign = savedFormData.remarketingCampaign || '';
       currentStep = savedFormData.currentStep || 1;
       showWelcomeBack = false;
     }
@@ -742,11 +694,6 @@
     email = '';
     phone = '';
     address = '';
-    affiliateSource = '';
-    affiliateKeyword = '';
-    publisherClickId = '';
-    clientPublicKey = '';
-    remarketingCampaign = '';
   }
   
   onMount(async () => {
@@ -755,23 +702,10 @@
     const titleQuery = queryParams.get("t") ?? "";
     title = parseTitle(titleQuery).join(" ");
     
-    // Capture affiliate parameters (supports both standard and UTM parameters)
-    // Priority: pcid/pmclid (original site params) > clickid/gclid (fallback)
-    const pcid = queryParams.get("pcid") || '';
-    const pmclid = queryParams.get("pmclid") || '';
-    const campaign = queryParams.get("c") || '';
-    
-    // Store in localStorage immediately for persistence across page refreshes
-    if (pmclid) localStorage.setItem('pmclid', pmclid);
-    if (pcid) localStorage.setItem('pcid', pcid);
-    if (campaign) localStorage.setItem('campaign', campaign);
-    
-    // Use pcid/pmclid as primary, fallback to clickid/gclid
-    publisherClickId = pcid || pmclid || queryParams.get("clickid") || queryParams.get("gclid") || '';
-    affiliateSource = queryParams.get("source") || queryParams.get("utm_source") || '';
-    affiliateKeyword = queryParams.get("keyword") || queryParams.get("utm_term") || '';
-    clientPublicKey = queryParams.get("pubkey") || campaign || '';
-    remarketingCampaign = queryParams.get("campaign") || queryParams.get("utm_campaign") || '';
+    // Capture all tracking parameters to preserve across steps
+    const params = new URLSearchParams(window.location.search);
+    params.delete('step'); // Remove step param as we'll manage it separately
+    trackingParams = params.toString();
     
     // Check if step is in URL, default to 1 (landing page)
     const stepParam = queryParams.get("step");
@@ -893,7 +827,8 @@
         
         // Go to Step 7 (Gender) for additional drivers (skip vehicle questions)
         currentStep = 7;
-        window.history.pushState({}, '', `?step=7`);
+        const newUrl = trackingParams ? `?${trackingParams}&step=7` : `?step=7`;
+        window.history.pushState({}, '', newUrl);
         
         // Save to localStorage
         localStorage.setItem('savemaxauto_drivers', JSON.stringify(drivers));
@@ -938,15 +873,14 @@
     // Step 12: Submit form and get leadId (before offer wall)
     if (currentStep === 12) {
       await submitForm();
-      // Start polling for lead status
-      pollCheckStatus();
       // Fetch offer wall after submission
       await fetchOfferWall();
     }
     
     if (currentStep < totalSteps) {
       currentStep++;
-      window.history.pushState({}, '', `?step=${currentStep}`);
+      const newUrl = trackingParams ? `?${trackingParams}&step=${currentStep}` : `?step=${currentStep}`;
+      window.history.pushState({}, '', newUrl);
     } else {
       // Final step - mark as completed and save
       saveCurrentDriver();
@@ -1099,9 +1033,13 @@
       
       <!-- Back Button (for steps > 1) -->
       {#if currentStep > 1}
-        <button 
+        <button
           type="button"
-          onclick={() => { currentStep--; window.history.pushState({}, '', `?step=${currentStep}`); }}
+          onclick={() => {
+            currentStep--;
+            const newUrl = trackingParams ? `?${trackingParams}&step=${currentStep}` : `?step=${currentStep}`;
+            window.history.pushState({}, '', newUrl);
+          }}
           class="flex items-center gap-2 text-[#01366b] font-medium mb-8 hover:text-[#47c2e8] transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1232,7 +1170,7 @@
                   {/if}
                   <button
                     type="submit"
-                    disabled={!zipCode || zipCode.length !== 5 || zipCodeError !== ''}
+                    disabled={!zipCode || zipCode.length !== 5}
                     class="text-[25px] font-normal h-[65px] bg-[#46c2e8] hover:bg-[#3bb5d9] text-white rounded-[2px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-none relative w-full font-['Roboto',sans-serif]"
                   >
                     GET STARTED

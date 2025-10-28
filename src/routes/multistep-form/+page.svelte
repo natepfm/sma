@@ -904,15 +904,33 @@
     
     // Step 12: Submit form and get leadId (before offer wall)
     if (currentStep === 12) {
-      await submitForm();
-      
-      // Poll for lead status if we have a leadId
-      if (leadId) {
-        const finalStatus = await pollLeadStatus(leadId);
+      // Validate required fields before submission
+      if (!city || !state) {
+        console.log('City/state missing, re-running ZIP lookup');
+        await autoCompleteZip(zipCode);
       }
       
-      // Fetch offer wall after status is determined
-      await fetchOfferWall();
+      // If still empty after retry, show error and don't proceed
+      if (!city || !state) {
+        console.error('Cannot submit: city/state are required');
+        alert('Unable to determine your city and state from ZIP code. Please try again.');
+        return;
+      }
+      
+      await submitForm();
+      
+      // Only proceed if we have a leadId
+      if (leadId) {
+        // Poll for lead status
+        const finalStatus = await pollLeadStatus(leadId);
+        
+        // Fetch offer wall after status is determined
+        await fetchOfferWall();
+      } else {
+        console.error('Form submission failed - no leadId received');
+        alert('There was an error submitting your form. Please try again.');
+        return;
+      }
     }
     
     if (currentStep < totalSteps) {

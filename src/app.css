@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+
+  /* Hide scrollbar but keep scroll functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .swiper-transition {
+    .swiper-wrapper {
+      -webkit-transition-timing-function: linear;
+      -o-transition-timing-function: linear;
+      transition-timing-function: linear;
+    }
+  }
+
+
+  /* Add this to your global CSS file (e.g., app.css) */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* You might also want to add other safe area utilities */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  /* Margin versions if needed */
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
+  }
+
+  .mr-safe {
+    margin-right: env(safe-area-inset-right);
+  }
+
+  .ml-safe {
+    margin-left: env(safe-area-inset-left);
+  }
+
+  /* Position versions if needed */
+  .bottom-safe {
+    bottom: env(safe-area-inset-bottom);
+  }
+
+  .top-safe {
+    top: env(safe-area-inset-top);
+  }
+
+  .right-safe {
+    right: env(safe-area-inset-right);
+  }
+
+  .left-safe {
+    left: env(safe-area-inset-left);
+  }

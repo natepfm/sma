@@ -564,24 +564,56 @@
     }
   }
   
+  async function checkStatus(checkLeadId: string) {
+    try {
+      const endpointUrl = `/api/v1/check-status?leadId=${checkLeadId}`;
+      const cookiesParam = encodeURIComponent(JSON.stringify(sessionCookies));
+      const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}&cookies=${cookiesParam}`);
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        return result.data;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Check status error:', error);
+      return null;
+    }
+  }
+  
+  async function pollLeadStatus(checkLeadId: string, maxAttempts = 10, intervalMs = 1000) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const statusData = await checkStatus(checkLeadId);
+      
+      if (statusData) {
+        const status = statusData.status;
+        
+        if (status === 'ACCEPTED' || status === 'REJECTED') {
+          return statusData;
+        }
+      }
+      
+      // Wait before next poll (except on last attempt)
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      }
+    }
+    
+    // Timeout - return last status or null
+    return { status: 'TIMEOUT' };
+  }
+  
   async function fetchOfferWall() {
     try {
-      console.log('Fetching offer wall with sessionId:', sessionId);
-      console.log('Fetching offer wall with leadId:', leadId);
       const endpointUrl = `/api/v1/lp/ads?leadId=${leadId}`;
       const cookiesParam = encodeURIComponent(JSON.stringify(sessionCookies));
       const response = await fetch(`/api/savemaxauto/proxy?endpoint=${encodeURIComponent(endpointUrl)}&sessionId=${sessionId}&cookies=${cookiesParam}`);
       const result = await response.json();
       
-      console.log('Offer wall response:', result);
-      console.log('Ads count:', result.data?.ads?.length || 0);
-      
       if (result.success && result.data?.ads) {
         offerAds = result.data.ads;
         localStorage.setItem('savemaxauto_offers', JSON.stringify(offerAds));
-        console.log('Loaded', offerAds.length, 'ads');
-      } else {
-        console.error('No ads in response:', result);
       }
       
       return result.data;
@@ -873,7 +905,13 @@
     // Step 12: Submit form and get leadId (before offer wall)
     if (currentStep === 12) {
       await submitForm();
-      // Fetch offer wall after submission
+      
+      // Poll for lead status if we have a leadId
+      if (leadId) {
+        const finalStatus = await pollLeadStatus(leadId);
+      }
+      
+      // Fetch offer wall after status is determined
       await fetchOfferWall();
     }
     

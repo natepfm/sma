@@ -36,11 +36,11 @@
   let editingEmail = $state<boolean>(false);
   let editingPhone = $state<boolean>(false);
   
-  // Temporary edit values
+  // Temporary edit values (using IDs for proper pre-population)
   let editVehicleYear = $state<string>('');
-  let editVehicleMake = $state<any>(null);
-  let editVehicleModel = $state<any>(null);
-  let editVehicleTrim = $state<any>(null);
+  let editVehicleMakeId = $state<number | string>('');
+  let editVehicleModelId = $state<number | string>('');
+  let editVehicleTrimId = $state<number | string>('');
   let editVehicleMakes = $state<any[]>([]);
   let editVehicleModels = $state<any[]>([]);
   let editVehicleTrims = $state<any[]>([]);
@@ -845,33 +845,43 @@
   async function startEditVehicle(index: number) {
     const vehicle = savedFormData.vehicles[index];
     editingVehicleIndex = index;
-    editVehicleYear = vehicle.year || '';
-    editVehicleMake = vehicle.make || null;
-    editVehicleModel = vehicle.model || null;
-    editVehicleTrim = vehicle.trim || null;
+    
+    // Set IDs immediately from saved data for pre-population
+    editVehicleYear = String(vehicle.year || '');
+    editVehicleMakeId = vehicle.make?.id || '';
+    editVehicleModelId = vehicle.model?.id || '';
+    editVehicleTrimId = vehicle.trim?.id || '';
+    
+    // Seed arrays with current selections as fallback
+    editVehicleMakes = vehicle.make ? [vehicle.make] : [];
+    editVehicleModels = vehicle.model ? [vehicle.model] : [];
+    editVehicleTrims = vehicle.trim ? [vehicle.trim] : [];
     
     // Load vehicle makes
-    try {
-      const makesResponse = await fetch(`${url}/api/makes`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': sessionCookies.join('; ')
-        },
-        credentials: 'include'
-      });
-      
-      if (makesResponse.ok) {
-        editVehicleMakes = await makesResponse.json();
+    if (url && sessionCookies?.length) {
+      try {
+        const makesResponse = await fetch(`${url}/api/makes`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': sessionCookies.join('; ')
+          },
+          credentials: 'include'
+        });
+        
+        if (makesResponse.ok) {
+          const makes = await makesResponse.json();
+          editVehicleMakes = makes.length > 0 ? makes : editVehicleMakes;
+        }
+      } catch (error) {
+        console.error('Error loading makes:', error);
       }
-    } catch (error) {
-      console.error('Error loading makes:', error);
     }
     
     // Load models if make is selected
-    if (editVehicleMake?.id) {
+    if (editVehicleMakeId && url && sessionCookies?.length) {
       try {
-        const modelsResponse = await fetch(`${url}/api/models?make_id=${editVehicleMake.id}`, {
+        const modelsResponse = await fetch(`${url}/api/models?make_id=${editVehicleMakeId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -881,7 +891,8 @@
         });
         
         if (modelsResponse.ok) {
-          editVehicleModels = await modelsResponse.json();
+          const models = await modelsResponse.json();
+          editVehicleModels = models.length > 0 ? models : editVehicleModels;
         }
       } catch (error) {
         console.error('Error loading models:', error);
@@ -889,9 +900,9 @@
     }
     
     // Load trims if model is selected
-    if (editVehicleModel?.id && editVehicleYear) {
+    if (editVehicleModelId && editVehicleYear && url && sessionCookies?.length) {
       try {
-        const trimsResponse = await fetch(`${url}/api/trims?model_id=${editVehicleModel.id}&year=${editVehicleYear}`, {
+        const trimsResponse = await fetch(`${url}/api/trims?model_id=${editVehicleModelId}&year=${editVehicleYear}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -901,7 +912,8 @@
         });
         
         if (trimsResponse.ok) {
-          editVehicleTrims = await trimsResponse.json();
+          const trims = await trimsResponse.json();
+          editVehicleTrims = trims.length > 0 ? trims : editVehicleTrims;
         }
       } catch (error) {
         console.error('Error loading trims:', error);
@@ -912,11 +924,16 @@
   // Save vehicle edit
   function saveVehicleEdit(index: number) {
     if (savedFormData && savedFormData.vehicles && savedFormData.vehicles[index]) {
+      // Construct objects from arrays by ID
+      const make = editVehicleMakes.find(m => m.id === editVehicleMakeId);
+      const model = editVehicleModels.find(m => m.id === editVehicleModelId);
+      const trim = editVehicleTrims.find(t => t.id === editVehicleTrimId);
+      
       savedFormData.vehicles[index] = {
         year: editVehicleYear,
-        make: editVehicleMake,
-        model: editVehicleModel,
-        trim: editVehicleTrim
+        make: make || null,
+        model: model || null,
+        trim: trim || null
       };
       
       // Update localStorage
@@ -925,9 +942,9 @@
       // Reset edit state
       editingVehicleIndex = -1;
       editVehicleYear = '';
-      editVehicleMake = null;
-      editVehicleModel = null;
-      editVehicleTrim = null;
+      editVehicleMakeId = '';
+      editVehicleModelId = '';
+      editVehicleTrimId = '';
       editVehicleMakes = [];
       editVehicleModels = [];
       editVehicleTrims = [];
@@ -975,11 +992,17 @@
   
   // Reactive watchers for edit mode dropdowns
   $effect(() => {
-    // When edit vehicle make changes, load models
-    if (editingVehicleIndex >= 0 && editVehicleMake?.id) {
+    // When edit vehicle make ID changes, reset dependent state and load models
+    if (editingVehicleIndex >= 0 && editVehicleMakeId && url && sessionCookies?.length) {
+      // Reset dependent state
+      editVehicleModelId = '';
+      editVehicleTrimId = '';
+      editVehicleModels = [];
+      editVehicleTrims = [];
+      
       (async () => {
         try {
-          const modelsResponse = await fetch(`${url}/api/models?make_id=${editVehicleMake.id}`, {
+          const modelsResponse = await fetch(`${url}/api/models?make_id=${editVehicleMakeId}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -999,11 +1022,15 @@
   });
   
   $effect(() => {
-    // When edit vehicle model or year changes, load trims
-    if (editingVehicleIndex >= 0 && editVehicleModel?.id && editVehicleYear) {
+    // When edit vehicle model ID or year changes, reset dependent state and load trims
+    if (editingVehicleIndex >= 0 && editVehicleModelId && editVehicleYear && url && sessionCookies?.length) {
+      // Reset dependent state
+      editVehicleTrimId = '';
+      editVehicleTrims = [];
+      
       (async () => {
         try {
-          const trimsResponse = await fetch(`${url}/api/trims?model_id=${editVehicleModel.id}&year=${editVehicleYear}`, {
+          const trimsResponse = await fetch(`${url}/api/trims?model_id=${editVehicleModelId}&year=${editVehicleYear}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -1481,12 +1508,12 @@
 
       <!-- Welcome Back Screen -->
       {#if showWelcomeBack && currentStep === 1}
-        <div class="max-w-[600px] w-full mx-auto text-center py-12 px-4">
+        <div class="max-w-[560px] w-full mx-auto text-center py-12 px-4">
           <!-- Welcome Back Heading -->
-          <h1 class="text-[14px] font-medium text-[#47c2e8] mb-2 uppercase tracking-wide">
+          <h1 class="text-[13px] font-semibold text-[#47c2e8] mb-3 uppercase tracking-wider">
             Welcome Back{savedFormData?.firstName ? ' ' + savedFormData.firstName : ''}!
           </h1>
-          <h2 class="text-[32px] font-bold text-[#036] mb-8 leading-tight">
+          <h2 class="text-[36px] font-bold text-[#036] mb-10 leading-tight">
             Your Auto Quotes Are Almost Ready For You!
           </h2>
 
@@ -1494,7 +1521,7 @@
           <button
             type="button"
             onclick={loadSavedData}
-            class="bg-[#47c2e8] hover:bg-[#36b2d8] text-white py-4 px-8 rounded-full font-semibold text-[18px] transition-all w-full max-w-[400px] mx-auto mb-4 shadow-lg"
+            class="bg-[#47c2e8] hover:bg-[#36b2d8] text-white py-[18px] px-8 rounded-full font-bold text-[17px] transition-all w-full max-w-[420px] mx-auto mb-5 shadow-[0_4px_12px_rgba(71,194,232,0.3)]"
           >
             Continue to Quotes
           </button>
@@ -1503,9 +1530,9 @@
           <button
             type="button"
             onclick={() => showSavedInfo = !showSavedInfo}
-            class="text-[#036] text-[16px] mb-6 bg-transparent border-none cursor-pointer flex items-center justify-center mx-auto gap-2 hover:underline"
+            class="text-[#036] text-[15px] mb-8 bg-transparent border-none cursor-pointer flex items-center justify-center mx-auto gap-2 hover:underline font-medium"
           >
-            See your information
+            {showSavedInfo ? 'Hide your information' : 'See your information'}
             <svg class="w-4 h-4 transition-transform {showSavedInfo ? 'rotate-180' : ''}" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
             </svg>
@@ -1513,14 +1540,14 @@
 
           <!-- Saved Information Sections -->
           {#if showSavedInfo && savedFormData}
-            <div class="bg-white border border-[#dde0e4] rounded-lg p-6 text-left mb-6 space-y-6">
+            <div class="bg-white border border-[#e5e7eb] rounded-lg p-6 text-left mb-6 space-y-5">
               
               <!-- Your Vehicles Section -->
               {#if savedFormData.vehicles && savedFormData.vehicles.length > 0}
                 <div>
-                  <h3 class="text-[18px] font-semibold text-[#036] mb-4">Your Vehicles</h3>
+                  <h3 class="text-[17px] font-bold text-[#036] mb-4">Your Vehicles</h3>
                   {#each savedFormData.vehicles as vehicle, index}
-                    <div class="border-b border-[#dde0e4] pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
+                    <div class="border-b border-[#e5e7eb] pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
                       {#if editingVehicleIndex === index}
                         <!-- Edit Mode for Vehicle -->
                         <div class="space-y-3">
@@ -1529,12 +1556,12 @@
                             <div>
                               <label class="text-[12px] text-[#666] mb-1 block">Vehicle Make</label>
                               <select 
-                                bind:value={editVehicleMake}
+                                bind:value={editVehicleMakeId}
                                 class="w-full border border-[#dde0e4] rounded px-3 py-2 text-[14px]"
                               >
-                                <option value={null}>Select Make</option>
+                                <option value="">Select Make</option>
                                 {#each editVehicleMakes as make}
-                                  <option value={make}>{make.name}</option>
+                                  <option value={make.id}>{make.name}</option>
                                 {/each}
                               </select>
                             </div>
@@ -1543,13 +1570,13 @@
                             <div>
                               <label class="text-[12px] text-[#666] mb-1 block">Vehicle Model</label>
                               <select 
-                                bind:value={editVehicleModel}
+                                bind:value={editVehicleModelId}
                                 class="w-full border border-[#dde0e4] rounded px-3 py-2 text-[14px]"
-                                disabled={!editVehicleMake}
+                                disabled={!editVehicleMakeId}
                               >
-                                <option value={null}>Select Model</option>
+                                <option value="">Select Model</option>
                                 {#each editVehicleModels as model}
-                                  <option value={model}>{model.name}</option>
+                                  <option value={model.id}>{model.name}</option>
                                 {/each}
                               </select>
                             </div>
@@ -1565,7 +1592,7 @@
                               >
                                 <option value="">Select Year</option>
                                 {#each vehicleYears as year}
-                                  <option value={year}>{year}</option>
+                                  <option value={String(year)}>{year}</option>
                                 {/each}
                               </select>
                             </div>
@@ -1574,13 +1601,13 @@
                             <div>
                               <label class="text-[12px] text-[#666] mb-1 block">Vehicle Trim</label>
                               <select 
-                                bind:value={editVehicleTrim}
+                                bind:value={editVehicleTrimId}
                                 class="w-full border border-[#dde0e4] rounded px-3 py-2 text-[14px]"
-                                disabled={!editVehicleModel}
+                                disabled={!editVehicleModelId}
                               >
-                                <option value={null}>Select Trim</option>
+                                <option value="">Select Trim</option>
                                 {#each editVehicleTrims as trim}
-                                  <option value={trim}>{trim.name}</option>
+                                  <option value={trim.id}>{trim.name}</option>
                                 {/each}
                               </select>
                             </div>
@@ -1596,28 +1623,28 @@
                         </div>
                       {:else}
                         <!-- Display Mode for Vehicle -->
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-between gap-3">
+                          <div class="flex items-center gap-3 flex-1 min-w-0">
                             {#if getVehicleMakeLogo(vehicle.make?.name || '')}
                               <img 
                                 src={getVehicleMakeLogo(vehicle.make?.name || '')} 
                                 alt={vehicle.make?.name || ''}
-                                class="w-10 h-10 object-contain"
+                                class="w-12 h-12 object-contain flex-shrink-0"
                               />
                             {/if}
-                            <div>
-                              <p class="text-[16px] font-semibold text-[#036]">
+                            <div class="flex-1 min-w-0">
+                              <p class="text-[15px] font-bold text-[#036] leading-tight">
                                 {vehicle.make?.name || ''} {vehicle.model?.name || ''}
                               </p>
-                              <p class="text-[14px] text-[#666]">
-                                {vehicle.year || ''} {vehicle.trim?.name ? '• ' + vehicle.trim.name : ''}
+                              <p class="text-[13px] text-[#6b7280] mt-1">
+                                {vehicle.year || ''}{vehicle.trim?.name ? ' • ' + vehicle.trim.name : ''}
                               </p>
                             </div>
                           </div>
                           <button
                             type="button"
                             onclick={() => startEditVehicle(index)}
-                            class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                            class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
                           >
                             EDIT
                           </button>
@@ -1629,14 +1656,14 @@
                   <!-- Add Another Vehicle -->
                   <button
                     type="button"
-                    class="flex items-center gap-2 text-[#036] text-[14px] font-medium hover:underline mt-4"
+                    class="flex items-start gap-3 text-[#036] text-[14px] font-medium hover:underline mt-3 w-full text-left"
                   >
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
                     </svg>
-                    <div class="text-left">
-                      <div>Add another vehicle</div>
-                      <div class="text-[12px] text-[#666] font-normal">Adding multiple cars also reduces your overall insurance cost.</div>
+                    <div class="flex-1">
+                      <div class="font-semibold">Add another vehicle</div>
+                      <div class="text-[12px] text-[#6b7280] font-normal mt-0.5">Adding multiple cars also reduces your overall insurance cost.</div>
                     </div>
                   </button>
                 </div>
@@ -1645,19 +1672,19 @@
               <!-- Listed Drivers Section -->
               {#if savedFormData.firstName && savedFormData.lastName}
                 <div>
-                  <h3 class="text-[18px] font-semibold text-[#036] mb-4">Listed Drivers</h3>
-                  <div class="flex items-center justify-between border-b border-[#dde0e4] pb-4 mb-4">
-                    <div class="flex items-center gap-3">
-                      <svg class="w-8 h-8 text-[#666]" fill="currentColor" viewBox="0 0 20 20">
+                  <h3 class="text-[17px] font-bold text-[#036] mb-4">Listed Drivers</h3>
+                  <div class="flex items-center justify-between gap-3 border-b border-[#e5e7eb] pb-4 mb-4">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                      <svg class="w-10 h-10 text-[#9ca3af] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                       </svg>
-                      <p class="text-[16px] font-semibold text-[#036]">
+                      <p class="text-[15px] font-bold text-[#036]">
                         {savedFormData.firstName} {savedFormData.lastName}
                       </p>
                     </div>
                     <button
                       type="button"
-                      class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                      class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
                     >
                       EDIT
                     </button>
@@ -1666,14 +1693,14 @@
                   <!-- Add Another Driver -->
                   <button
                     type="button"
-                    class="flex items-center gap-2 text-[#036] text-[14px] font-medium hover:underline"
+                    class="flex items-start gap-3 text-[#036] text-[14px] font-medium hover:underline w-full text-left"
                   >
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
                     </svg>
-                    <div class="text-left">
-                      <div>Add another driver</div>
-                      <div class="text-[12px] text-[#666] font-normal">Adding multiple drivers also reduces your overall insurance cost.</div>
+                    <div class="flex-1">
+                      <div class="font-semibold">Add another driver</div>
+                      <div class="text-[12px] text-[#6b7280] font-normal mt-0.5">Adding multiple drivers also reduces your overall insurance cost.</div>
                     </div>
                   </button>
                 </div>
@@ -1681,14 +1708,14 @@
 
               <!-- Current Insurance Section -->
               {#if savedFormData.currentInsurance}
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-[14px] text-[#666] mb-1">Current Insurance</p>
-                    <p class="text-[16px] font-medium text-[#036]">{savedFormData.currentInsurance}</p>
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[13px] text-[#6b7280] mb-1">Current Insurance</p>
+                    <p class="text-[15px] font-bold text-[#036]">{savedFormData.currentInsurance}</p>
                   </div>
                   <button
                     type="button"
-                    class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                    class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
                   >
                     EDIT
                   </button>
@@ -1697,14 +1724,14 @@
 
               <!-- Home Ownership Section -->
               {#if savedFormData.homeowner}
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-[14px] text-[#666] mb-1">Home Ownership</p>
-                    <p class="text-[16px] font-medium text-[#036]">{savedFormData.homeowner === 'yes' ? 'Own' : 'Rent'}</p>
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[13px] text-[#6b7280] mb-1">Home Ownership</p>
+                    <p class="text-[15px] font-bold text-[#036]">{savedFormData.homeowner === 'yes' ? 'Own' : 'Rent'}</p>
                   </div>
                   <button
                     type="button"
-                    class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                    class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
                   >
                     EDIT
                   </button>
@@ -1713,14 +1740,14 @@
 
               <!-- Email Section -->
               {#if savedFormData.email}
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-[14px] text-[#666] mb-1">Email</p>
-                    <p class="text-[16px] font-medium text-[#036]">{savedFormData.email}</p>
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[13px] text-[#6b7280] mb-1">Email</p>
+                    <p class="text-[15px] font-bold text-[#036] break-all">{savedFormData.email}</p>
                   </div>
                   <button
                     type="button"
-                    class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                    class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
                   >
                     EDIT
                   </button>
@@ -1729,14 +1756,14 @@
 
               <!-- Phone Section -->
               {#if savedFormData.phone}
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-[14px] text-[#666] mb-1">Phone</p>
-                    <p class="text-[16px] font-medium text-[#036]">{savedFormData.phone}</p>
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[13px] text-[#6b7280] mb-1">Phone</p>
+                    <p class="text-[15px] font-bold text-[#036]">{savedFormData.phone}</p>
                   </div>
                   <button
                     type="button"
-                    class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                    class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
                   >
                     EDIT
                   </button>
@@ -1747,11 +1774,11 @@
           {/if}
 
           <!-- Call an Expert Section -->
-          <div class="mt-8 pt-6 border-t border-[#dde0e4] flex items-center justify-center gap-3">
-            <img src="/images/forms/lady.png" alt="Expert" class="w-12 h-12 rounded-full" onerror={(e) => e.currentTarget.style.display = 'none'}/>
+          <div class="mt-8 pt-6 border-t border-[#e5e7eb] flex items-center justify-center gap-4">
+            <img src="/images/forms/lady.png" alt="Expert" class="w-14 h-14 rounded-full" onerror={(e) => e.currentTarget.style.display = 'none'}/>
             <div class="text-left">
-              <p class="text-[14px] text-[#666]">Call an expert</p>
-              <a href="tel:8663068446" class="text-[20px] font-bold text-[#036] hover:underline">1-866-306-8446</a>
+              <p class="text-[13px] text-[#6b7280] mb-1">Call an expert</p>
+              <a href="tel:8663068446" class="text-[22px] font-bold text-[#036] hover:underline leading-none">1-866-306-8446</a>
             </div>
           </div>
         </div>

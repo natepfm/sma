@@ -107,6 +107,13 @@
   let frozenProgressStep = $state<number>(0); // Step number where progress was frozen
   let primaryDriverName = $state<string>(''); // Store first driver's name for contact info heading
   
+  // Multi-vehicle support
+  let vehicles = $state<any[]>([]); // Array to store all vehicles
+  let currentVehicleIndex = $state<number>(0); // 0 = first vehicle, 1 = second, etc.
+  let addAnotherVehicle = $state<string>('no'); // Add another vehicle question
+  let vehicleProgressFrozen = $state<boolean>(false); // Freeze progress when adding additional vehicles
+  let frozenVehicleProgressStep = $state<number>(0); // Step number where vehicle progress was frozen
+  
   // API-loaded vehicle data
   let vehicleYears = $state<number[]>([]);
   let vehicleMakes = $state<any[]>([]);
@@ -121,6 +128,7 @@
   // 3: Vehicle Make
   // 4: Vehicle Model
   // 5: Own Vehicle
+  // 5.5: Add Another Vehicle? (NEW - matches external form at 27% progress)
   // 6: Insurance Company
   // 7: Personal Info (Gender, Married, Homeowner, Military)
   // 8: Driving History (Accident, Ticket, DUI)
@@ -459,28 +467,46 @@
       const insuredDate = new Date(today);
       insuredDate.setMonth(today.getMonth() - 6);
       
-      // If trim wasn't selected, use the first one or a default
-      const selectedTrim = vehicleTrim || (vehicleTrims.length > 0 ? vehicleTrims[0] : {
-        id: 0,
-        name: "Not Sure",
-        vin: "XXXXXXXXXXXXXXXXX"
-      });
+      // Get compliance tokens from hidden inputs (TrustedForm and Jornaya)
+      const trustedFormCertUrl = (typeof document !== 'undefined' && document.getElementById('xxTrustedFormCertUrl')) 
+        ? (document.getElementById('xxTrustedFormCertUrl') as HTMLInputElement)?.value || '' 
+        : '';
+      const jornayaId = (typeof window !== 'undefined' && (window as any).LeadiD?.token) 
+        ? (window as any).LeadiD.token 
+        : '';
       
-      const payload = {
-        hint: "noRoot",
-        jornayaId: "", // Will be set by tracking script
-        trustedFormCertUrl: "",
-        customer: {
-          firstName,
-          lastName,
-          email,
-          phone: cleanPhone,
-          address,
-          city,
-          state,
-          zip: zipCode
-        },
-        vehicles: [{
+      // Build vehicles array from saved vehicles
+      // If no vehicles saved yet, use current vehicle fields (backward compatibility)
+      let vehiclesArray = [];
+      if (vehicles.length > 0) {
+        // Use saved vehicles array
+        vehiclesArray = vehicles.map(vehicle => {
+          const trim = vehicle.trim || {
+            id: 0,
+            name: "Not Sure",
+            vin: "XXXXXXXXXXXXXXXXX"
+          };
+          return {
+            annualMiles: 12000,
+            collisionDeductible: "1000",
+            comprehensiveDeductible: "1000",
+            currentMileage: 50000,
+            make: vehicle.make ? { id: vehicle.make.id, name: vehicle.make.name } : null,
+            model: vehicle.model ? { id: vehicle.model.id, name: vehicle.model.name } : null,
+            ownership: vehicle.ownership === 'yes' ? 'OWN' : 'LEASE',
+            trim: trim ? { id: trim.id, name: trim.name, vin: trim.vin } : null,
+            usedFor: "COMMUTE_WORK",
+            year: parseInt(vehicle.year)
+          };
+        });
+      } else {
+        // Fallback to current vehicle fields (backward compatibility)
+        const selectedTrim = vehicleTrim || (vehicleTrims.length > 0 ? vehicleTrims[0] : {
+          id: 0,
+          name: "Not Sure",
+          vin: "XXXXXXXXXXXXXXXXX"
+        });
+        vehiclesArray = [{
           annualMiles: 12000,
           collisionDeductible: "1000",
           comprehensiveDeductible: "1000",
@@ -491,7 +517,24 @@
           trim: selectedTrim ? { id: selectedTrim.id, name: selectedTrim.name, vin: selectedTrim.vin } : null,
           usedFor: "COMMUTE_WORK",
           year: parseInt(vehicleYear)
-        }],
+        }];
+      }
+      
+      const payload = {
+        hint: "noRoot",
+        jornayaId: jornayaId,
+        trustedFormCertUrl: trustedFormCertUrl,
+        customer: {
+          firstName,
+          lastName,
+          email,
+          phone: cleanPhone,
+          address,
+          city,
+          state,
+          zip: zipCode
+        },
+        vehicles: vehiclesArray,
         drivers: drivers.map((driver, index) => ({
           homeAutoBundle: driver.homeowner === 'yes',
           ageLicensed: 16,
@@ -651,10 +694,45 @@
       phone,
       address,
       currentStep,
+      vehicles,
+      currentVehicleIndex,
       lastUpdated: new Date().toISOString()
     };
 
     localStorage.setItem('savemaxauto_incomplete_form', JSON.stringify(formData));
+  }
+  
+  // Save current vehicle to vehicles array
+  function saveCurrentVehicle() {
+    const currentVehicle = {
+      year: vehicleYear,
+      make: vehicleMake,
+      model: vehicleModel,
+      trim: vehicleTrim,
+      ownership: ownsVehicle
+    };
+    
+    // Add or update current vehicle in array
+    if (vehicles[currentVehicleIndex]) {
+      vehicles[currentVehicleIndex] = currentVehicle;
+    } else {
+      vehicles.push(currentVehicle);
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('savemaxauto_vehicles', JSON.stringify(vehicles));
+  }
+  
+  // Reset vehicle fields for next vehicle entry
+  function resetVehicleFields() {
+    vehicleYear = '';
+    vehicleMake = null;
+    vehicleModel = null;
+    vehicleTrim = null;
+    ownsVehicle = 'yes';
+    vehicleMakes = [];
+    vehicleModels = [];
+    vehicleTrims = [];
   }
   
   // Load saved form data when user returns
@@ -685,6 +763,8 @@
       phone = savedFormData.phone || '';
       address = savedFormData.address || '';
       currentStep = savedFormData.currentStep || 1;
+      vehicles = savedFormData.vehicles || [];
+      currentVehicleIndex = savedFormData.currentVehicleIndex || 0;
       showWelcomeBack = false;
     }
   }
@@ -799,6 +879,42 @@
       await getSession();
       await autoCompleteZip(zipCode);
       await fetchVehicleYears(); // Load years after session is created
+    }
+    
+    // Step 5: After "Own Vehicle", save current vehicle before proceeding
+    if (currentStep === 5) {
+      saveCurrentVehicle();
+    }
+    
+    // Step 5.5: Handle "Add another vehicle?" logic (NEW - matches external form)
+    if (currentStep === 5.5) {
+      if (addAnotherVehicle === 'yes') {
+        // Current vehicle already saved at step 5
+        
+        // Freeze progress bar at 27% (step 5.5)
+        if (!vehicleProgressFrozen) {
+          vehicleProgressFrozen = true;
+          frozenVehicleProgressStep = currentStep;
+        }
+        
+        // Increment vehicle index
+        currentVehicleIndex++;
+        
+        // Reset vehicle fields for next vehicle
+        resetVehicleFields();
+        
+        // Go to Step 2 (Vehicle Year) for additional vehicles
+        currentStep = 2;
+        const newUrl = trackingParams ? `?${trackingParams}&step=2` : `?step=2`;
+        window.history.pushState({}, '', newUrl);
+        
+        // Save to localStorage
+        localStorage.setItem('savemaxauto_vehicles', JSON.stringify(vehicles));
+        return;
+      } else {
+        // If No, unfreeze progress bar and continue to Insurance Company (Step 6)
+        vehicleProgressFrozen = false;
+      }
     }
     
     // Step 11: Handle "Add another driver?" logic
@@ -934,7 +1050,15 @@
     }
     
     if (currentStep < totalSteps) {
-      currentStep++;
+      // Special handling: After step 5, go to step 5.5 (Add Another Vehicle)
+      if (currentStep === 5) {
+        currentStep = 5.5;
+      } else if (currentStep === 5.5) {
+        // After step 5.5, go to step 6
+        currentStep = 6;
+      } else {
+        currentStep++;
+      }
       const newUrl = trackingParams ? `?${trackingParams}&step=${currentStep}` : `?step=${currentStep}`;
       window.history.pushState({}, '', newUrl);
     } else {
@@ -1027,6 +1151,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- TrustedForm Integration for TCPA Compliance -->
+  {@html `
+    <script type="text/javascript">
+      (function() {
+        var tf = document.createElement('script');
+        tf.type = 'text/javascript'; 
+        tf.async = true;
+        tf.src = ("https:" == document.location.protocol ? 'https' : 'http') + 
+                 "://api.trustedform.com/trustedform.js?field=xxTrustedFormCertUrl&ping_field=xxTrustedFormPingUrl&l=" + 
+                 new Date().getTime() + Math.random();
+        var s = document.getElementsByTagName('script')[0]; 
+        s.parentNode.insertBefore(tf, s);
+      })();
+    </script>
+  `}
+  
+  <!-- Jornaya LeadID Integration - TODO: Replace with actual campaign ID -->
+  {@html `
+    <script id="LeadiDscript_campaign" type="text/javascript" 
+            src="https://create.lidstatic.com/campaign/YOUR_CAMPAIGN_ID_HERE.js?snippet_version=2" 
+            async>
+    </script>
+  `}
 </svelte:head>
 
 <div class="min-h-screen bg-white font-['Roboto',sans-serif]">
@@ -1061,14 +1209,14 @@
               <div class="h-[4px] bg-[#dcdcdc] rounded-[0px]"></div>
               <div 
                 class="absolute top-0 left-0 h-[4px] bg-[#00c484] rounded-[5px] transition-all duration-[600ms]"
-                style="width: {((progressBarFrozen ? frozenProgressStep : currentStep) - 1) / (totalSteps - 1) * 100}%"
+                style="width: {((vehicleProgressFrozen ? frozenVehicleProgressStep : (progressBarFrozen ? frozenProgressStep : currentStep)) - 1) / (totalSteps - 1) * 100}%"
               ></div>
               <div 
                 class="absolute top-1/2 -translate-y-1/2 transition-all duration-500 -ml-[31px]"
-                style="left: {((progressBarFrozen ? frozenProgressStep : currentStep) - 1) / (totalSteps - 1) * 100}%"
+                style="left: {((vehicleProgressFrozen ? frozenVehicleProgressStep : (progressBarFrozen ? frozenProgressStep : currentStep)) - 1) / (totalSteps - 1) * 100}%"
               >
                 <div class="bg-[#124476] text-white text-[16px] leading-[20px] font-semibold px-[16px] py-[8px] rounded-[20px] min-w-[62px] text-center">
-                  {Math.round(((progressBarFrozen ? frozenProgressStep : currentStep) - 1) / (totalSteps - 1) * 100)}%
+                  {Math.round(((vehicleProgressFrozen ? frozenVehicleProgressStep : (progressBarFrozen ? frozenProgressStep : currentStep)) - 1) / (totalSteps - 1) * 100)}%
                 </div>
               </div>
             </div>
@@ -1205,6 +1353,10 @@
               
               <!-- Form -->
               <form onsubmit={(e) => { e.preventDefault(); nextStep(); }} class="max-w-[350px] mx-auto px-4">
+                <!-- Hidden inputs for TrustedForm compliance -->
+                <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" />
+                <input type="hidden" name="xxTrustedFormPingUrl" id="xxTrustedFormPingUrl" />
+                
                 <div class="flex flex-col gap-[6px]">
                   <input
                     type="tel"
@@ -1364,6 +1516,15 @@
       <!-- Step 2: Vehicle Year -->
       {:else if currentStep === 2}
         <div class="max-w-[860px] mx-auto px-4">
+          <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
+          {#if currentVehicleIndex > 0}
+            <div class="text-center mb-6">
+              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+                {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
+              </p>
+            </div>
+          {/if}
+          
           <div class="text-center mb-[28px]">
             <h1 class="text-[36px] font-bold text-[#000e1b]">Vehicle Year</h1>
           </div>
@@ -1384,6 +1545,15 @@
       <!-- Step 3: Vehicle Make -->
       {:else if currentStep === 3}
         <div class="max-w-[860px] mx-auto px-4">
+          <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
+          {#if currentVehicleIndex > 0}
+            <div class="text-center mb-6">
+              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+                {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
+              </p>
+            </div>
+          {/if}
+          
           <div class="text-center mb-[28px]">
             <h1 class="text-[36px] font-bold text-[#000e1b]">Vehicle Make</h1>
           </div>
@@ -1408,6 +1578,15 @@
       <!-- Step 4: Vehicle Model -->
       {:else if currentStep === 4}
         <div class="max-w-[860px] mx-auto px-4">
+          <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
+          {#if currentVehicleIndex > 0}
+            <div class="text-center mb-6">
+              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+                {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
+              </p>
+            </div>
+          {/if}
+          
           <div class="text-center mb-[28px]">
             <h1 class="text-[36px] font-bold text-[#000e1b]">Vehicle Model</h1>
           </div>
@@ -1432,6 +1611,15 @@
       <!-- Step 5: Own This Vehicle -->
       {:else if currentStep === 5}
         <div class="max-w-[860px] mx-auto px-4">
+          <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
+          {#if currentVehicleIndex > 0}
+            <div class="text-center mb-6">
+              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+                {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
+              </p>
+            </div>
+          {/if}
+          
           <div class="text-center mb-[28px]">
             <h1 class="text-[36px] font-bold text-[#000e1b]">Do You Own This Vehicle?</h1>
           </div>
@@ -1461,6 +1649,42 @@
               class="bg-[#124476] hover:bg-[#46c2e8] text-white px-8 py-3 rounded-full font-medium transition-colors w-full max-w-[450px]"
             >
               Continue
+            </button>
+          </div>
+        </div>
+
+      <!-- Step 5.5: Add Another Vehicle? (NEW - matches external form at 27% progress) -->
+      {:else if currentStep === 5.5}
+        <div class="max-w-[860px] mx-auto px-4">
+          <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
+          {#if currentVehicleIndex > 0}
+            <div class="text-center mb-6">
+              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+                {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
+              </p>
+            </div>
+          {/if}
+          
+          <div class="text-center mb-[28px]">
+            <h1 class="text-[36px] font-bold text-[#000e1b]">
+              Save an Additional 20% by Adding a {currentVehicleIndex === 0 ? '2nd' : currentVehicleIndex === 1 ? '3rd' : `${currentVehicleIndex + 2}th`} Vehicle
+            </h1>
+          </div>
+          
+          <div class="flex gap-4 max-w-[450px] mx-auto">
+            <button
+              type="button"
+              onclick={() => { addAnotherVehicle = 'yes'; nextStep(); }}
+              class="simple-option"
+            >
+              ADD ANOTHER VEHICLE
+            </button>
+            <button
+              type="button"
+              onclick={() => { addAnotherVehicle = 'no'; nextStep(); }}
+              class="simple-option-gray"
+            >
+              No thanks!
             </button>
           </div>
         </div>

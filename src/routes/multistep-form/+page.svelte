@@ -1168,10 +1168,10 @@
     </script>
   `}
   
-  <!-- Jornaya LeadID Integration - TODO: Replace with actual campaign ID -->
+  <!-- Jornaya LeadID Integration -->
   {@html `
     <script id="LeadiDscript_campaign" type="text/javascript" 
-            src="https://create.lidstatic.com/campaign/YOUR_CAMPAIGN_ID_HERE.js?snippet_version=2" 
+            src="https://create.lidstatic.com/campaign/e943bced-c610-90b4-52a5-e0d12d103fcb.js?snippet_version=2" 
             async>
     </script>
   `}

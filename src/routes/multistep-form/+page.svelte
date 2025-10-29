@@ -1510,18 +1510,21 @@
       {#if showWelcomeBack && currentStep === 1}
         <div class="max-w-[560px] w-full mx-auto text-center py-12 px-4">
           <!-- Welcome Back Heading -->
-          <h1 class="text-[13px] font-semibold text-[#47c2e8] mb-3 uppercase tracking-wider">
-            Welcome Back{savedFormData?.firstName ? ' ' + savedFormData.firstName : ''}!
+          <h1 class="text-center mb-6">
+            <small class="block text-[14px] font-semibold text-[#46C2E8] mb-[10px] uppercase" style="font-family: Poppins, sans-serif, arial, serif; line-height: 16px;">
+              Welcome Back{savedFormData?.firstName ? ' ' + savedFormData.firstName : ''}!
+            </small>
+            <span class="block text-[36px] font-light text-[#124476] leading-[40px]" style="font-family: Tiempos-Medium, 'Helvetica Neue', sans-serif; font-weight: 300;">
+              Your Auto Quotes Are Almost Ready For You!
+            </span>
           </h1>
-          <h2 class="text-[36px] font-bold text-[#036] mb-10 leading-tight">
-            Your Auto Quotes Are Almost Ready For You!
-          </h2>
 
           <!-- Continue to Quotes Button -->
           <button
             type="button"
             onclick={loadSavedData}
-            class="bg-[#47c2e8] hover:bg-[#36b2d8] text-white py-[18px] px-8 rounded-full font-bold text-[17px] transition-all w-full max-w-[420px] mx-auto mb-5 shadow-[0_4px_12px_rgba(71,194,232,0.3)]"
+            class="bg-[#46C2E8] hover:bg-[#36b2d8] text-white rounded-[50px] font-semibold text-[16px] transition-all w-full max-w-[420px] mx-auto mb-4 shadow-[0_1px_2px_rgba(70,194,232,0.3)]"
+            style="font-family: Poppins, 'Helvetica Neue', sans-serif; padding: 19px; line-height: 24px; font-weight: 600;"
           >
             Continue to Quotes
           </button>
@@ -1530,7 +1533,8 @@
           <button
             type="button"
             onclick={() => showSavedInfo = !showSavedInfo}
-            class="text-[#036] text-[15px] mb-8 bg-transparent border-none cursor-pointer flex items-center justify-center mx-auto gap-2 hover:underline font-medium"
+            class="text-[#124476] text-[16px] mb-4 bg-transparent border-none cursor-pointer flex items-center justify-center mx-auto gap-2 hover:underline"
+            style="font-family: Poppins, 'Helvetica Neue', sans-serif; line-height: 18.4px; font-weight: 400;"
           >
             {showSavedInfo ? 'Hide your information' : 'See your information'}
             <svg class="w-4 h-4 transition-transform {showSavedInfo ? 'rotate-180' : ''}" fill="currentColor" viewBox="0 0 20 20">
@@ -1545,7 +1549,7 @@
               <!-- Your Vehicles Section -->
               {#if savedFormData.vehicles && savedFormData.vehicles.length > 0}
                 <div>
-                  <h3 class="text-[17px] font-bold text-[#036] mb-4">Your Vehicles</h3>
+                  <h3 class="text-[17px] font-bold text-[#124476] mb-4" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 700;">Your Vehicles</h3>
                   {#each savedFormData.vehicles as vehicle, index}
                     <div class="border-b border-[#e5e7eb] pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
                       {#if editingVehicleIndex === index}
@@ -1629,22 +1633,18 @@
                               <img 
                                 src={getVehicleMakeLogo(vehicle.make?.name || '')} 
                                 alt={vehicle.make?.name || ''}
-                                class="w-12 h-12 object-contain flex-shrink-0"
+                                class="w-[48px] h-[48px] object-contain flex-shrink-0"
                               />
                             {/if}
-                            <div class="flex-1 min-w-0">
-                              <p class="text-[15px] font-bold text-[#036] leading-tight">
-                                {vehicle.make?.name || ''} {vehicle.model?.name || ''}
-                              </p>
-                              <p class="text-[13px] text-[#6b7280] mt-1">
-                                {vehicle.year || ''}{vehicle.trim?.name ? ' • ' + vehicle.trim.name : ''}
-                              </p>
-                            </div>
+                            <h5 class="text-[16px] font-bold text-[#124476] leading-[20px] m-0 flex-1 min-w-0" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 700;">
+                              {vehicle.make?.name || ''} {vehicle.model?.name || ''}
+                            </h5>
                           </div>
                           <button
                             type="button"
                             onclick={() => startEditVehicle(index)}
-                            class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
+                            class="bg-[#DCDCDC] text-black text-[14px] font-semibold border-none cursor-pointer flex-shrink-0 rounded-[2px]"
+                            style="font-family: Poppins, 'Helvetica Neue', sans-serif; padding: 5px; line-height: 10px; font-weight: 600;"
                           >
                             EDIT
                           </button>
@@ -1656,14 +1656,15 @@
                   <!-- Add Another Vehicle -->
                   <button
                     type="button"
-                    class="flex items-start gap-3 text-[#036] text-[14px] font-medium hover:underline mt-3 w-full text-left"
+                    class="flex items-start gap-3 text-[#666666] text-[16px] hover:underline mt-3 w-full text-left bg-transparent border-none cursor-pointer"
+                    style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 400;"
                   >
                     <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
                     </svg>
                     <div class="flex-1">
-                      <div class="font-semibold">Add another vehicle</div>
-                      <div class="text-[12px] text-[#6b7280] font-normal mt-0.5">Adding multiple cars also reduces your overall insurance cost.</div>
+                      <div class="font-normal">Add another vehicle</div>
+                      <div class="text-[16px] text-[#666666] font-normal mt-0.5">Adding multiple cars also reduces your overall insurance cost.</div>
                     </div>
                   </button>
                 </div>
@@ -1672,19 +1673,20 @@
               <!-- Listed Drivers Section -->
               {#if savedFormData.firstName && savedFormData.lastName}
                 <div>
-                  <h3 class="text-[17px] font-bold text-[#036] mb-4">Listed Drivers</h3>
+                  <h3 class="text-[17px] font-bold text-[#124476] mb-4" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 700;">Listed Drivers</h3>
                   <div class="flex items-center justify-between gap-3 border-b border-[#e5e7eb] pb-4 mb-4">
                     <div class="flex items-center gap-3 flex-1 min-w-0">
                       <svg class="w-10 h-10 text-[#9ca3af] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                       </svg>
-                      <p class="text-[15px] font-bold text-[#036]">
+                      <h5 class="text-[16px] font-bold text-[#124476] leading-[20px] m-0" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 700;">
                         {savedFormData.firstName} {savedFormData.lastName}
-                      </p>
+                      </h5>
                     </div>
                     <button
                       type="button"
-                      class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
+                      class="bg-[#DCDCDC] text-black text-[14px] font-semibold border-none cursor-pointer flex-shrink-0 rounded-[2px]"
+                      style="font-family: Poppins, 'Helvetica Neue', sans-serif; padding: 5px; line-height: 10px; font-weight: 600;"
                     >
                       EDIT
                     </button>
@@ -1693,14 +1695,15 @@
                   <!-- Add Another Driver -->
                   <button
                     type="button"
-                    class="flex items-start gap-3 text-[#036] text-[14px] font-medium hover:underline w-full text-left"
+                    class="flex items-start gap-3 text-[#666666] text-[16px] hover:underline w-full text-left bg-transparent border-none cursor-pointer"
+                    style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 400;"
                   >
                     <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
                     </svg>
                     <div class="flex-1">
-                      <div class="font-semibold">Add another driver</div>
-                      <div class="text-[12px] text-[#6b7280] font-normal mt-0.5">Adding multiple drivers also reduces your overall insurance cost.</div>
+                      <div class="font-normal">Add another driver</div>
+                      <div class="text-[16px] text-[#666666] font-normal mt-0.5">Adding multiple drivers also reduces your overall insurance cost.</div>
                     </div>
                   </button>
                 </div>
@@ -1708,14 +1711,15 @@
 
               <!-- Current Insurance Section -->
               {#if savedFormData.currentInsurance}
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center justify-between gap-3 border-b border-[#e5e7eb] pb-4">
                   <div class="flex-1 min-w-0">
-                    <p class="text-[13px] text-[#6b7280] mb-1">Current Insurance</p>
-                    <p class="text-[15px] font-bold text-[#036]">{savedFormData.currentInsurance}</p>
+                    <p class="text-[16px] font-bold text-[#124476] mb-1" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 700;">Current Insurance</p>
+                    <p class="text-[16px] text-[#124476]" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 400;">{savedFormData.currentInsurance}</p>
                   </div>
                   <button
                     type="button"
-                    class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
+                    class="bg-[#DCDCDC] text-black text-[14px] font-semibold border-none cursor-pointer flex-shrink-0 rounded-[2px]"
+                    style="font-family: Poppins, 'Helvetica Neue', sans-serif; padding: 5px; line-height: 10px; font-weight: 600;"
                   >
                     EDIT
                   </button>
@@ -1724,14 +1728,15 @@
 
               <!-- Home Ownership Section -->
               {#if savedFormData.homeowner}
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center justify-between gap-3 border-b border-[#e5e7eb] pb-4">
                   <div class="flex-1 min-w-0">
-                    <p class="text-[13px] text-[#6b7280] mb-1">Home Ownership</p>
-                    <p class="text-[15px] font-bold text-[#036]">{savedFormData.homeowner === 'yes' ? 'Own' : 'Rent'}</p>
+                    <p class="text-[16px] font-bold text-[#124476] mb-1" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 700;">Home Ownership</p>
+                    <p class="text-[16px] text-[#124476]" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 400;">{savedFormData.homeowner === 'yes' ? 'Own' : 'Rent'}</p>
                   </div>
                   <button
                     type="button"
-                    class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
+                    class="bg-[#DCDCDC] text-black text-[14px] font-semibold border-none cursor-pointer flex-shrink-0 rounded-[2px]"
+                    style="font-family: Poppins, 'Helvetica Neue', sans-serif; padding: 5px; line-height: 10px; font-weight: 600;"
                   >
                     EDIT
                   </button>
@@ -1740,14 +1745,15 @@
 
               <!-- Email Section -->
               {#if savedFormData.email}
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center justify-between gap-3 border-b border-[#e5e7eb] pb-4">
                   <div class="flex-1 min-w-0">
-                    <p class="text-[13px] text-[#6b7280] mb-1">Email</p>
-                    <p class="text-[15px] font-bold text-[#036] break-all">{savedFormData.email}</p>
+                    <p class="text-[16px] font-bold text-[#124476] mb-1" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 700;">Email</p>
+                    <p class="text-[16px] text-[#124476] break-all" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 400;">{savedFormData.email}</p>
                   </div>
                   <button
                     type="button"
-                    class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
+                    class="bg-[#DCDCDC] text-black text-[14px] font-semibold border-none cursor-pointer flex-shrink-0 rounded-[2px]"
+                    style="font-family: Poppins, 'Helvetica Neue', sans-serif; padding: 5px; line-height: 10px; font-weight: 600;"
                   >
                     EDIT
                   </button>
@@ -1758,12 +1764,13 @@
               {#if savedFormData.phone}
                 <div class="flex items-center justify-between gap-3">
                   <div class="flex-1 min-w-0">
-                    <p class="text-[13px] text-[#6b7280] mb-1">Phone</p>
-                    <p class="text-[15px] font-bold text-[#036]">{savedFormData.phone}</p>
+                    <p class="text-[16px] font-bold text-[#124476] mb-1" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 700;">Phone</p>
+                    <p class="text-[16px] text-[#124476]" style="font-family: Poppins, 'Helvetica Neue', sans-serif; font-weight: 400;">{savedFormData.phone}</p>
                   </div>
                   <button
                     type="button"
-                    class="text-[#036] text-[13px] font-bold hover:underline bg-transparent border-none cursor-pointer flex-shrink-0"
+                    class="bg-[#DCDCDC] text-black text-[14px] font-semibold border-none cursor-pointer flex-shrink-0 rounded-[2px]"
+                    style="font-family: Poppins, 'Helvetica Neue', sans-serif; padding: 5px; line-height: 10px; font-weight: 600;"
                   >
                     EDIT
                   </button>

@@ -4,6 +4,7 @@
   import { setupTracking } from '$lib/utils/pixels';
   import Disclaimer from '$lib/components/google/Disclaimer.svelte';
   import GoogleFooter from '$lib/components/google/GoogleFooter.svelte';
+  import { getVehicleMakeLogo } from '$lib/data/vehicleMakeLogos';
   
   // Get server-side data
   let { data } = $props();
@@ -26,6 +27,23 @@
   let savedFormData = $state<any>(null);
   let showWelcomeBack = $state<boolean>(false);
   let showSavedInfo = $state<boolean>(false);
+  
+  // Welcome back edit states
+  let editingVehicleIndex = $state<number>(-1); // -1 means not editing
+  let editingDriver = $state<boolean>(false);
+  let editingInsurance = $state<boolean>(false);
+  let editingHomeOwnership = $state<boolean>(false);
+  let editingEmail = $state<boolean>(false);
+  let editingPhone = $state<boolean>(false);
+  
+  // Temporary edit values
+  let editVehicleYear = $state<string>('');
+  let editVehicleMake = $state<any>(null);
+  let editVehicleModel = $state<any>(null);
+  let editVehicleTrim = $state<any>(null);
+  let editVehicleMakes = $state<any[]>([]);
+  let editVehicleModels = $state<any[]>([]);
+  let editVehicleTrims = $state<any[]>([]);
 
   // Load session and incomplete form from localStorage on client
   if (typeof window !== 'undefined') {
@@ -823,6 +841,99 @@
     }
   }
 
+  // Start editing a vehicle
+  async function startEditVehicle(index: number) {
+    const vehicle = savedFormData.vehicles[index];
+    editingVehicleIndex = index;
+    editVehicleYear = vehicle.year || '';
+    editVehicleMake = vehicle.make || null;
+    editVehicleModel = vehicle.model || null;
+    editVehicleTrim = vehicle.trim || null;
+    
+    // Load vehicle makes
+    try {
+      const makesResponse = await fetch(`${url}/api/makes`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': sessionCookies.join('; ')
+        },
+        credentials: 'include'
+      });
+      
+      if (makesResponse.ok) {
+        editVehicleMakes = await makesResponse.json();
+      }
+    } catch (error) {
+      console.error('Error loading makes:', error);
+    }
+    
+    // Load models if make is selected
+    if (editVehicleMake?.id) {
+      try {
+        const modelsResponse = await fetch(`${url}/api/models?make_id=${editVehicleMake.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': sessionCookies.join('; ')
+          },
+          credentials: 'include'
+        });
+        
+        if (modelsResponse.ok) {
+          editVehicleModels = await modelsResponse.json();
+        }
+      } catch (error) {
+        console.error('Error loading models:', error);
+      }
+    }
+    
+    // Load trims if model is selected
+    if (editVehicleModel?.id && editVehicleYear) {
+      try {
+        const trimsResponse = await fetch(`${url}/api/trims?model_id=${editVehicleModel.id}&year=${editVehicleYear}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': sessionCookies.join('; ')
+          },
+          credentials: 'include'
+        });
+        
+        if (trimsResponse.ok) {
+          editVehicleTrims = await trimsResponse.json();
+        }
+      } catch (error) {
+        console.error('Error loading trims:', error);
+      }
+    }
+  }
+
+  // Save vehicle edit
+  function saveVehicleEdit(index: number) {
+    if (savedFormData && savedFormData.vehicles && savedFormData.vehicles[index]) {
+      savedFormData.vehicles[index] = {
+        year: editVehicleYear,
+        make: editVehicleMake,
+        model: editVehicleModel,
+        trim: editVehicleTrim
+      };
+      
+      // Update localStorage
+      localStorage.setItem('savemaxauto_incomplete_form', JSON.stringify(savedFormData));
+      
+      // Reset edit state
+      editingVehicleIndex = -1;
+      editVehicleYear = '';
+      editVehicleMake = null;
+      editVehicleModel = null;
+      editVehicleTrim = null;
+      editVehicleMakes = [];
+      editVehicleModels = [];
+      editVehicleTrims = [];
+    }
+  }
+
   // Start new quote (clear saved data)
   function startNewQuote() {
     localStorage.removeItem('savemaxauto_incomplete_form');
@@ -861,6 +972,55 @@
     phone = '';
     address = '';
   }
+  
+  // Reactive watchers for edit mode dropdowns
+  $effect(() => {
+    // When edit vehicle make changes, load models
+    if (editingVehicleIndex >= 0 && editVehicleMake?.id) {
+      (async () => {
+        try {
+          const modelsResponse = await fetch(`${url}/api/models?make_id=${editVehicleMake.id}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cookie': sessionCookies.join('; ')
+            },
+            credentials: 'include'
+          });
+          
+          if (modelsResponse.ok) {
+            editVehicleModels = await modelsResponse.json();
+          }
+        } catch (error) {
+          console.error('Error loading models:', error);
+        }
+      })();
+    }
+  });
+  
+  $effect(() => {
+    // When edit vehicle model or year changes, load trims
+    if (editingVehicleIndex >= 0 && editVehicleModel?.id && editVehicleYear) {
+      (async () => {
+        try {
+          const trimsResponse = await fetch(`${url}/api/trims?model_id=${editVehicleModel.id}&year=${editVehicleYear}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cookie': sessionCookies.join('; ')
+            },
+            credentials: 'include'
+          });
+          
+          if (trimsResponse.ok) {
+            editVehicleTrims = await trimsResponse.json();
+          }
+        } catch (error) {
+          console.error('Error loading trims:', error);
+        }
+      })();
+    }
+  });
   
   onMount(async () => {
     url = await Promise.resolve(setupTracking("drivepolicypro.com"));
@@ -1321,66 +1481,279 @@
 
       <!-- Welcome Back Screen -->
       {#if showWelcomeBack && currentStep === 1}
-        <div class="max-w-[450px] w-full mx-auto text-center py-12">
-          <h1 class="text-[36px] font-bold text-[#000e1b] mb-4">WELCOME BACK!</h1>
-          <p class="text-[18px] text-[#666] mb-8">Your Auto Quotes Are Almost Ready For You!</p>
+        <div class="max-w-[600px] w-full mx-auto text-center py-12 px-4">
+          <!-- Welcome Back Heading -->
+          <h1 class="text-[14px] font-medium text-[#47c2e8] mb-2 uppercase tracking-wide">
+            Welcome Back{savedFormData?.firstName ? ' ' + savedFormData.firstName : ''}!
+          </h1>
+          <h2 class="text-[32px] font-bold text-[#036] mb-8 leading-tight">
+            Your Auto Quotes Are Almost Ready For You!
+          </h2>
 
+          <!-- Continue to Quotes Button -->
           <button
             type="button"
             onclick={loadSavedData}
-            class="bg-[#124476] hover:bg-[#46c2e8] text-white py-[18px] px-[19px] rounded-[50px] font-semibold text-[18px] transition-all w-full max-w-[450px] mx-auto mb-6"
-            style="box-shadow: 0 8px 16px 0 rgba(18, 68, 118, 0.1);"
+            class="bg-[#47c2e8] hover:bg-[#36b2d8] text-white py-4 px-8 rounded-full font-semibold text-[18px] transition-all w-full max-w-[400px] mx-auto mb-4 shadow-lg"
           >
             Continue to Quotes
           </button>
 
+          <!-- See your information Toggle -->
           <button
             type="button"
             onclick={() => showSavedInfo = !showSavedInfo}
-            class="text-[#124476] text-[16px] underline mb-6 bg-transparent border-none cursor-pointer"
+            class="text-[#036] text-[16px] mb-6 bg-transparent border-none cursor-pointer flex items-center justify-center mx-auto gap-2 hover:underline"
           >
-            {showSavedInfo ? 'Hide' : 'See your information'}
+            See your information
+            <svg class="w-4 h-4 transition-transform {showSavedInfo ? 'rotate-180' : ''}" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
           </button>
 
+          <!-- Saved Information Sections -->
           {#if showSavedInfo && savedFormData}
-            <div class="bg-white border border-[#dde0e4] rounded-lg p-6 text-left mb-6">
-              <div class="mb-4">
-                <p class="text-[14px] text-[#666] mb-1">Vehicle</p>
-                <p class="text-[16px] font-medium text-[#000e1b]">
-                  {savedFormData.vehicleYear || ''} {savedFormData.vehicleMake?.name || ''} {savedFormData.vehicleModel?.name || ''}
-                </p>
-              </div>
-
-              <div class="mb-4 flex justify-between items-center">
+            <div class="bg-white border border-[#dde0e4] rounded-lg p-6 text-left mb-6 space-y-6">
+              
+              <!-- Your Vehicles Section -->
+              {#if savedFormData.vehicles && savedFormData.vehicles.length > 0}
                 <div>
-                  <p class="text-[14px] text-[#666] mb-1">Insured</p>
-                  <p class="text-[16px] font-medium text-[#000e1b]">{savedFormData.ownsVehicle === 'yes' ? 'Yes' : 'No'}</p>
+                  <h3 class="text-[18px] font-semibold text-[#036] mb-4">Your Vehicles</h3>
+                  {#each savedFormData.vehicles as vehicle, index}
+                    <div class="border-b border-[#dde0e4] pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
+                      {#if editingVehicleIndex === index}
+                        <!-- Edit Mode for Vehicle -->
+                        <div class="space-y-3">
+                          <div class="grid grid-cols-2 gap-3">
+                            <!-- Vehicle Make Dropdown -->
+                            <div>
+                              <label class="text-[12px] text-[#666] mb-1 block">Vehicle Make</label>
+                              <select 
+                                bind:value={editVehicleMake}
+                                class="w-full border border-[#dde0e4] rounded px-3 py-2 text-[14px]"
+                              >
+                                <option value={null}>Select Make</option>
+                                {#each editVehicleMakes as make}
+                                  <option value={make}>{make.name}</option>
+                                {/each}
+                              </select>
+                            </div>
+                            
+                            <!-- Vehicle Model Dropdown -->
+                            <div>
+                              <label class="text-[12px] text-[#666] mb-1 block">Vehicle Model</label>
+                              <select 
+                                bind:value={editVehicleModel}
+                                class="w-full border border-[#dde0e4] rounded px-3 py-2 text-[14px]"
+                                disabled={!editVehicleMake}
+                              >
+                                <option value={null}>Select Model</option>
+                                {#each editVehicleModels as model}
+                                  <option value={model}>{model.name}</option>
+                                {/each}
+                              </select>
+                            </div>
+                          </div>
+                          
+                          <div class="grid grid-cols-2 gap-3">
+                            <!-- Vehicle Year Dropdown -->
+                            <div>
+                              <label class="text-[12px] text-[#666] mb-1 block">Vehicle Year</label>
+                              <select 
+                                bind:value={editVehicleYear}
+                                class="w-full border border-[#dde0e4] rounded px-3 py-2 text-[14px]"
+                              >
+                                <option value="">Select Year</option>
+                                {#each vehicleYears as year}
+                                  <option value={year}>{year}</option>
+                                {/each}
+                              </select>
+                            </div>
+                            
+                            <!-- Vehicle Trim Dropdown -->
+                            <div>
+                              <label class="text-[12px] text-[#666] mb-1 block">Vehicle Trim</label>
+                              <select 
+                                bind:value={editVehicleTrim}
+                                class="w-full border border-[#dde0e4] rounded px-3 py-2 text-[14px]"
+                                disabled={!editVehicleModel}
+                              >
+                                <option value={null}>Select Trim</option>
+                                {#each editVehicleTrims as trim}
+                                  <option value={trim}>{trim.name}</option>
+                                {/each}
+                              </select>
+                            </div>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onclick={() => saveVehicleEdit(index)}
+                            class="bg-[#47c2e8] hover:bg-[#36b2d8] text-white py-2 px-6 rounded font-medium text-[14px] transition-all"
+                          >
+                            SAVE
+                          </button>
+                        </div>
+                      {:else}
+                        <!-- Display Mode for Vehicle -->
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-3">
+                            {#if getVehicleMakeLogo(vehicle.make?.name || '')}
+                              <img 
+                                src={getVehicleMakeLogo(vehicle.make?.name || '')} 
+                                alt={vehicle.make?.name || ''}
+                                class="w-10 h-10 object-contain"
+                              />
+                            {/if}
+                            <div>
+                              <p class="text-[16px] font-semibold text-[#036]">
+                                {vehicle.make?.name || ''} {vehicle.model?.name || ''}
+                              </p>
+                              <p class="text-[14px] text-[#666]">
+                                {vehicle.year || ''} {vehicle.trim?.name ? '• ' + vehicle.trim.name : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onclick={() => startEditVehicle(index)}
+                            class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                          >
+                            EDIT
+                          </button>
+                        </div>
+                      {/if}
+                    </div>
+                  {/each}
+                  
+                  <!-- Add Another Vehicle -->
+                  <button
+                    type="button"
+                    class="flex items-center gap-2 text-[#036] text-[14px] font-medium hover:underline mt-4"
+                  >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="text-left">
+                      <div>Add another vehicle</div>
+                      <div class="text-[12px] text-[#666] font-normal">Adding multiple cars also reduces your overall insurance cost.</div>
+                    </div>
+                  </button>
                 </div>
-                <button class="text-[#124476] text-[14px] font-medium underline bg-transparent border-none cursor-pointer">EDIT</button>
-              </div>
+              {/if}
 
-              <div class="flex justify-between items-center">
+              <!-- Listed Drivers Section -->
+              {#if savedFormData.firstName && savedFormData.lastName}
                 <div>
-                  <p class="text-[14px] text-[#666] mb-1">Current Insurance</p>
-                  <p class="text-[16px] font-medium text-[#000e1b]">{savedFormData.currentInsurance || ''}</p>
+                  <h3 class="text-[18px] font-semibold text-[#036] mb-4">Listed Drivers</h3>
+                  <div class="flex items-center justify-between border-b border-[#dde0e4] pb-4 mb-4">
+                    <div class="flex items-center gap-3">
+                      <svg class="w-8 h-8 text-[#666]" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                      </svg>
+                      <p class="text-[16px] font-semibold text-[#036]">
+                        {savedFormData.firstName} {savedFormData.lastName}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                    >
+                      EDIT
+                    </button>
+                  </div>
+                  
+                  <!-- Add Another Driver -->
+                  <button
+                    type="button"
+                    class="flex items-center gap-2 text-[#036] text-[14px] font-medium hover:underline"
+                  >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="text-left">
+                      <div>Add another driver</div>
+                      <div class="text-[12px] text-[#666] font-normal">Adding multiple drivers also reduces your overall insurance cost.</div>
+                    </div>
+                  </button>
                 </div>
-                <button class="text-[#124476] text-[14px] font-medium underline bg-transparent border-none cursor-pointer">EDIT</button>
-              </div>
+              {/if}
+
+              <!-- Current Insurance Section -->
+              {#if savedFormData.currentInsurance}
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-[14px] text-[#666] mb-1">Current Insurance</p>
+                    <p class="text-[16px] font-medium text-[#036]">{savedFormData.currentInsurance}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                  >
+                    EDIT
+                  </button>
+                </div>
+              {/if}
+
+              <!-- Home Ownership Section -->
+              {#if savedFormData.homeowner}
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-[14px] text-[#666] mb-1">Home Ownership</p>
+                    <p class="text-[16px] font-medium text-[#036]">{savedFormData.homeowner === 'yes' ? 'Own' : 'Rent'}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                  >
+                    EDIT
+                  </button>
+                </div>
+              {/if}
+
+              <!-- Email Section -->
+              {#if savedFormData.email}
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-[14px] text-[#666] mb-1">Email</p>
+                    <p class="text-[16px] font-medium text-[#036]">{savedFormData.email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                  >
+                    EDIT
+                  </button>
+                </div>
+              {/if}
+
+              <!-- Phone Section -->
+              {#if savedFormData.phone}
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-[14px] text-[#666] mb-1">Phone</p>
+                    <p class="text-[16px] font-medium text-[#036]">{savedFormData.phone}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="text-[#036] text-[14px] font-medium hover:underline bg-transparent border-none cursor-pointer"
+                  >
+                    EDIT
+                  </button>
+                </div>
+              {/if}
+
             </div>
           {/if}
 
-          <div class="mt-8 pt-6 border-t border-[#dde0e4]">
-            <p class="text-[16px] text-[#666] mb-2">Call an expert</p>
-            <a href="tel:8663068446" class="text-[24px] font-bold text-[#124476]">1-866-306-8446</a>
+          <!-- Call an Expert Section -->
+          <div class="mt-8 pt-6 border-t border-[#dde0e4] flex items-center justify-center gap-3">
+            <img src="/images/forms/lady.png" alt="Expert" class="w-12 h-12 rounded-full" onerror={(e) => e.currentTarget.style.display = 'none'}/>
+            <div class="text-left">
+              <p class="text-[14px] text-[#666]">Call an expert</p>
+              <a href="tel:8663068446" class="text-[20px] font-bold text-[#036] hover:underline">1-866-306-8446</a>
+            </div>
           </div>
-
-          <button
-            type="button"
-            onclick={startNewQuote}
-            class="text-[#666] text-[14px] mt-6 bg-transparent border-none cursor-pointer underline"
-          >
-            Start a new quote
-          </button>
         </div>
 
       <!-- Landing Page: ZIP Code Entry or Saved Drivers -->
@@ -1629,6 +2002,13 @@
                   onclick={() => selectOption(make, 'vehicleMake')}
                   class="simple-option {vehicleMake?.id === make.id ? 'active-simple' : ''}"
                 >
+                  {#if getVehicleMakeLogo(make.name)}
+                    <img 
+                      src={getVehicleMakeLogo(make.name)} 
+                      alt={make.name}
+                      class="w-12 h-12 mx-auto mb-2 object-contain"
+                    />
+                  {/if}
                   {make.name}
                 </button>
               {/each}

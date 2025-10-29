@@ -114,6 +114,10 @@
   let vehicleProgressFrozen = $state<boolean>(false); // Freeze progress when adding additional vehicles
   let frozenVehicleProgressStep = $state<number>(0); // Step number where vehicle progress was frozen
   
+  // Continuous status checking
+  let continuousPollingActive = $state<boolean>(false); // Track if continuous polling is active
+  let continuousPollingIntervalId = $state<number | null>(null); // Store interval ID for cleanup
+  
   // API-loaded vehicle data
   let vehicleYears = $state<number[]>([]);
   let vehicleMakes = $state<any[]>([]);
@@ -647,6 +651,56 @@
     return { status: 'TIMEOUT' };
   }
   
+  // Continuous polling function that runs indefinitely until status is ACCEPTED or REJECTED
+  function startContinuousStatusPolling(checkLeadId: string, intervalMs = 5000) {
+    // Stop any existing polling
+    stopContinuousStatusPolling();
+    
+    continuousPollingActive = true;
+    
+    // Create an async function to poll status
+    const pollStatus = async () => {
+      if (!continuousPollingActive) {
+        return;
+      }
+      
+      try {
+        const statusData = await checkStatus(checkLeadId);
+        
+        if (statusData) {
+          const status = statusData.status;
+          console.log('Continuous polling - Lead status:', status);
+          
+          // Stop polling if status is final
+          if (status === 'ACCEPTED' || status === 'REJECTED') {
+            console.log('Lead status is final:', status);
+            stopContinuousStatusPolling();
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Continuous polling error:', error);
+      }
+    };
+    
+    // Start polling immediately
+    pollStatus();
+    
+    // Set up interval for continuous polling
+    continuousPollingIntervalId = window.setInterval(pollStatus, intervalMs);
+    
+    console.log('Started continuous status polling with interval:', intervalMs, 'ms');
+  }
+  
+  function stopContinuousStatusPolling() {
+    if (continuousPollingIntervalId !== null) {
+      clearInterval(continuousPollingIntervalId);
+      continuousPollingIntervalId = null;
+      console.log('Stopped continuous status polling');
+    }
+    continuousPollingActive = false;
+  }
+  
   async function fetchOfferWall() {
     try {
       const endpointUrl = `/api/v1/lp/ads?leadId=${leadId}`;
@@ -830,6 +884,11 @@
     // DON'T create session on mount - wait for user to click GET STARTED
     // Load vehicle years for when they get to step 2
     vehicleYears = Array.from({ length: 36 }, (_, i) => 2025 - i);
+    
+    // Cleanup function - stop continuous polling when component unmounts
+    return () => {
+      stopContinuousStatusPolling();
+    };
   });
   
   async function nextStep() {
@@ -1042,6 +1101,10 @@
         
         // Fetch offer wall after status is determined
         await fetchOfferWall();
+        
+        // Start continuous status polling after offer wall is displayed
+        // This will continue checking status even after the offer wall is shown
+        startContinuousStatusPolling(leadId, 5000); // Poll every 5 seconds
       } else {
         console.error('Form submission failed - no leadId received');
         alert('There was an error submitting your form. Please try again.');

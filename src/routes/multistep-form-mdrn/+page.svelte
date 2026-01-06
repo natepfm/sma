@@ -1537,7 +1537,7 @@
   <!-- TrustedForm and Jornaya scripts are now loaded in onMount() for proper execution -->
 </svelte:head>
 
-<div class="min-h-screen bg-white font-['Roboto',sans-serif]">
+<div class="min-h-screen font-['Poppins',sans-serif]" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
   <!-- TrustedForm compliance form - always rendered, hidden from view -->
   <!-- TrustedForm requires inputs to be inside a <form> element to populate them -->
   <form id="trustedform-compliance-form" style="display: none;">
@@ -1545,44 +1545,44 @@
     <input type="hidden" name="xxTrustedFormPingUrl" id="xxTrustedFormPingUrl" />
   </form>
   
-  <!-- Header with Logo and Progress -->
+  <!-- Modern Header with Logo and Progress -->
   {#if currentStep > 1}
-    <header class="bg-white">
-      <div class="container mx-auto px-[15px]">
+    <header class="bg-white/95 backdrop-blur-lg shadow-lg">
+      <div class="container mx-auto px-[20px]">
         <!-- Logo and Free Call Button Row -->
-        <div class="flex items-center justify-between pt-[48px] pb-[30px]">
+        <div class="flex items-center justify-between pt-[40px] pb-[24px]">
           <!-- Logo -->
-          <div class="flex items-center w-[205px]">
-            <span class="text-[#01366b] font-bold text-[28px]">SaveMax<span class="text-[#47c2e8]">Auto</span></span>
+          <div class="flex items-center">
+            <span class="font-bold text-[32px]" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SaveMax<span style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Auto</span></span>
           </div>
           
           <div class="flex-1"></div>
           
-          <!-- Free Call Button -->
-          <button class="flex items-center gap-2 px-[18px] py-[10px] rounded-[4px] text-[#257eba] font-medium text-[18px] leading-6 cursor-pointer border-none min-w-[100px] outline-none" style="background: linear-gradient(-180deg, #fff, #d6e3f2); box-shadow: 0 0 0 1px #2f9ee9; transition: color .2s; font-family: Poppins, Helvetica Neue, sans-serif;">
-            <svg class="" width="24" height="24" viewBox="0 0 24 24" style="transform: rotate(0deg);" xmlns="http://www.w3.org/2000/svg">
+          <!-- Modern Free Call Button -->
+          <button class="flex items-center gap-2 px-[24px] py-[12px] rounded-[12px] font-semibold text-[16px] leading-6 cursor-pointer border-2 min-w-[120px] outline-none transition-all duration-300" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); font-family: Poppins, sans-serif;">
+            <svg class="" width="20" height="20" viewBox="0 0 24 24" style="transform: rotate(0deg);" xmlns="http://www.w3.org/2000/svg">
               <g fill="none" fill-rule="evenodd">
-                <path d="M7.464 2.393l2.993 5.558-2.601 1.562a1 1 0 0 0-.101.069l-.092.081a1 1 0 0 0 0 1.414h0l5.26 5.26a1 1 0 0 0 1.564-.193h0l1.561-2.602 5.559 2.994-2.829 2.828a6 6 0 0 1-8.485 0l-5.657-5.657a6 6 0 0 1 0-8.485l2.828-2.829z" stroke="#257eba" stroke-width="2"></path>
+                <path d="M7.464 2.393l2.993 5.558-2.601 1.562a1 1 0 0 0-.101.069l-.092.081a1 1 0 0 0 0 1.414h0l5.26 5.26a1 1 0 0 0 1.564-.193h0l1.561-2.602 5.559 2.994-2.829 2.828a6 6 0 0 1-8.485 0l-5.657-5.657a6 6 0 0 1 0-8.485l2.828-2.829z" stroke="white" stroke-width="2"></path>
               </g>
             </svg>
             Free call
           </button>
         </div>
         
-        <!-- Progress Bar Row (with spacing on left and right) -->
-        <div class="flex justify-center">
+        <!-- Modern Progress Bar Row -->
+        <div class="flex justify-center pb-[32px]">
           <div class="w-full max-w-[90%]">
-            <div class="relative mt-5">
-              <div class="h-[4px] bg-[#dcdcdc] rounded-[0px]"></div>
+            <div class="relative">
+              <div class="h-[8px] bg-gray-200 rounded-full"></div>
               <div 
-                class="absolute top-0 left-0 h-[4px] bg-[#00c484] rounded-[5px] transition-all duration-[600ms]"
-                style="width: {((vehicleProgressFrozen ? frozenVehicleProgressStep : (progressBarFrozen ? frozenProgressStep : currentStep)) - 1) / (totalSteps - 1) * 100}%"
+                class="absolute top-0 left-0 h-[8px] rounded-full transition-all duration-[600ms]"
+                style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: {((vehicleProgressFrozen ? frozenVehicleProgressStep : (progressBarFrozen ? frozenProgressStep : currentStep)) - 1) / (totalSteps - 1) * 100}%"
               ></div>
               <div 
-                class="absolute top-1/2 -translate-y-1/2 transition-all duration-500 -ml-[31px]"
+                class="absolute top-1/2 -translate-y-1/2 transition-all duration-500 -ml-[35px]"
                 style="left: {((vehicleProgressFrozen ? frozenVehicleProgressStep : (progressBarFrozen ? frozenProgressStep : currentStep)) - 1) / (totalSteps - 1) * 100}%"
               >
-                <div class="bg-[#124476] text-white text-[16px] leading-[20px] font-semibold px-[16px] py-[8px] rounded-[20px] min-w-[62px] text-center">
+                <div class="text-white text-[14px] leading-[18px] font-bold px-[18px] py-[10px] rounded-full min-w-[70px] text-center shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                   {Math.round(((vehicleProgressFrozen ? frozenVehicleProgressStep : (progressBarFrozen ? frozenProgressStep : currentStep)) - 1) / (totalSteps - 1) * 100)}%
                 </div>
               </div>
@@ -1592,17 +1592,17 @@
       </div>
     </header>
   {:else}
-    <!-- Simple Logo for Step 1 -->
-    <div class="flex justify-center pt-8 pb-4">
-      <span class="text-[#01366b] font-bold text-2xl">SaveMax<span class="text-[#47c2e8]">Auto</span> LLC</span>
+    <!-- Modern Simple Logo for Step 1 -->
+    <div class="flex justify-center pt-12 pb-6">
+      <span class="font-bold text-3xl" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SaveMax<span style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Auto</span> LLC</span>
     </div>
   {/if}
 
-  <!-- Form Container -->
+  <!-- Modern Form Container with Card -->
   <div class="max-w-[1240px] mx-auto px-4 sm:px-8 pb-12">
-    <div class="mt-12 sm:mt-16">
+    <div class="mt-8 sm:mt-12 bg-white rounded-3xl shadow-2xl p-8 sm:p-12" style="box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
       
-      <!-- Back Button (for steps > 1) -->
+      <!-- Modern Back Button (for steps > 1) -->
       {#if currentStep > 1}
         <button
           type="button"
@@ -1611,10 +1611,17 @@
             const newUrl = trackingParams ? `?${trackingParams}&step=${currentStep}` : `?step=${currentStep}`;
             window.history.pushState({}, '', newUrl);
           }}
-          class="flex items-center gap-2 text-[#01366b] font-medium mb-8 hover:text-[#47c2e8] transition-colors"
+          class="flex items-center gap-2 font-semibold mb-8 px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105"
+          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border: 2px solid transparent; background-origin: border-box;"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          <svg class="w-5 h-5" fill="none" stroke="url(#gradient)" viewBox="0 0 24 24">
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" stroke="#667eea"/>
           </svg>
           Back
         </button>
@@ -1626,32 +1633,32 @@
       <!-- Welcome Back Screen -->
       {#if showWelcomeBack && currentStep === 1}
         <div class="max-w-[560px] w-full mx-auto text-center py-12 px-4">
-          <!-- Welcome Back Heading -->
+          <!-- Modern Welcome Back Heading -->
           <h1 class="text-center mb-6">
-            <small class="block text-[14px] font-semibold text-[#46C2E8] mb-[10px] uppercase" style="font-family: Poppins, sans-serif, arial, serif; line-height: 16px;">
+            <small class="block text-[14px] font-bold mb-[10px] uppercase" style="font-family: Poppins, sans-serif; line-height: 16px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
               Welcome Back{savedFormData?.firstName ? ' ' + savedFormData.firstName : ''}!
             </small>
-            <span class="block text-[36px] font-light text-[#124476] leading-[40px]" style="font-family: Tiempos-Medium, 'Helvetica Neue', sans-serif; font-weight: 300;">
+            <span class="block text-[40px] font-bold leading-[44px]" style="font-family: Poppins, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
               Your Auto Quotes Are Almost Ready For You!
             </span>
           </h1>
 
-          <!-- Continue to Quotes Button -->
+          <!-- Modern Continue to Quotes Button -->
           <button
             type="button"
             onclick={loadSavedData}
-            class="bg-[#46C2E8] hover:bg-[#36b2d8] text-white rounded-[50px] font-semibold text-[16px] transition-all w-full max-w-[420px] mx-auto mb-4 shadow-[0_1px_2px_rgba(70,194,232,0.3)]"
-            style="font-family: Poppins, 'Helvetica Neue', sans-serif; padding: 19px; line-height: 24px; font-weight: 600;"
+            class="text-white rounded-[16px] font-bold text-[18px] transition-all duration-300 w-full max-w-[420px] mx-auto mb-4 hover:scale-105"
+            style="font-family: Poppins, sans-serif; padding: 20px; line-height: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);"
           >
             Continue to Quotes
           </button>
 
-          <!-- See your information Toggle -->
+          <!-- Modern See your information Toggle -->
           <button
             type="button"
             onclick={() => showSavedInfo = !showSavedInfo}
-            class="text-[#124476] text-[16px] mb-4 bg-transparent border-none cursor-pointer flex items-center justify-center mx-auto gap-2 hover:underline"
-            style="font-family: Poppins, 'Helvetica Neue', sans-serif; line-height: 18.4px; font-weight: 400;"
+            class="text-[16px] mb-4 bg-transparent border-none cursor-pointer flex items-center justify-center mx-auto gap-2 font-semibold transition-all duration-300 hover:scale-105"
+            style="font-family: Poppins, sans-serif; line-height: 18.4px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"
           >
             {showSavedInfo ? 'Hide your information' : 'See your information'}
             <svg class="w-4 h-4 transition-transform {showSavedInfo ? 'rotate-180' : ''}" fill="currentColor" viewBox="0 0 20 20">
@@ -2102,14 +2109,14 @@
           <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
           {#if currentVehicleIndex > 0}
             <div class="text-center mb-6">
-              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+              <p class="text-[14px] font-bold uppercase tracking-wider" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
               </p>
             </div>
           {/if}
           
           <div class="text-center mb-[28px]">
-            <h1 class="text-[36px] font-bold text-[#000e1b]">Vehicle Year</h1>
+            <h1 class="text-[40px] font-bold" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Vehicle Year</h1>
           </div>
           
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-[450px] mx-auto">
@@ -2131,14 +2138,14 @@
           <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
           {#if currentVehicleIndex > 0}
             <div class="text-center mb-6">
-              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+              <p class="text-[14px] font-bold uppercase tracking-wider" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
               </p>
             </div>
           {/if}
           
           <div class="text-center mb-[28px]">
-            <h1 class="text-[36px] font-bold text-[#000e1b]">Vehicle Make</h1>
+            <h1 class="text-[36px] font-bold text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">Vehicle Make</h1>
           </div>
           
           {#if vehicleMakes.length > 0}
@@ -2171,14 +2178,14 @@
           <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
           {#if currentVehicleIndex > 0}
             <div class="text-center mb-6">
-              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+              <p class="text-[14px] font-bold uppercase tracking-wider" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
               </p>
             </div>
           {/if}
           
           <div class="text-center mb-[28px]">
-            <h1 class="text-[36px] font-bold text-[#000e1b]">Vehicle Model</h1>
+            <h1 class="text-[36px] font-bold text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">Vehicle Model</h1>
           </div>
           
           {#if vehicleModels.length > 0}
@@ -2204,14 +2211,14 @@
           <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
           {#if currentVehicleIndex > 0}
             <div class="text-center mb-6">
-              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+              <p class="text-[14px] font-bold uppercase tracking-wider" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
               </p>
             </div>
           {/if}
           
           <div class="text-center mb-[28px]">
-            <h1 class="text-[36px] font-bold text-[#000e1b]">Do You Own This Vehicle?</h1>
+            <h1 class="text-[36px] font-bold text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">Do You Own This Vehicle?</h1>
           </div>
           
           <div class="flex gap-4 max-w-[450px] mx-auto">
@@ -2249,14 +2256,14 @@
           <!-- Vehicle Label (for 2nd, 3rd vehicle, etc.) -->
           {#if currentVehicleIndex > 0}
             <div class="text-center mb-6">
-              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+              <p class="text-[14px] font-bold uppercase tracking-wider" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 {currentVehicleIndex === 1 ? '2ND VEHICLE' : currentVehicleIndex === 2 ? '3RD VEHICLE' : `${currentVehicleIndex + 1}TH VEHICLE`}
               </p>
             </div>
           {/if}
           
           <div class="text-center mb-[28px]">
-            <h1 class="text-[36px] font-bold text-[#000e1b]">
+            <h1 class="text-[36px] font-bold text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
               Save an Additional 20% by Adding a {currentVehicleIndex === 0 ? '2nd' : currentVehicleIndex === 1 ? '3rd' : `${currentVehicleIndex + 2}th`} Vehicle
             </h1>
           </div>
@@ -2283,7 +2290,7 @@
       {:else if currentStep === 6}
         <div class="max-w-[860px] mx-auto px-4">
           <div class="text-center mb-[28px]">
-            <h1 class="text-[36px] font-bold text-[#000e1b]">Current Insurance Company</h1>
+            <h1 class="text-[36px] font-bold text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">Current Insurance Company</h1>
           </div>
           
           <div class="flex flex-col gap-4 max-w-[450px] mx-auto">
@@ -2305,7 +2312,7 @@
           <!-- Driver Label (for 2nd, 3rd driver, etc.) -->
           {#if currentDriverIndex > 0}
             <div class="text-center mb-6">
-              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+              <p class="text-[14px] font-bold uppercase tracking-wider" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 {currentDriverIndex === 1 ? '2ND DRIVER' : currentDriverIndex === 2 ? '3RD DRIVER' : `${currentDriverIndex + 1}TH DRIVER`}
               </p>
             </div>
@@ -2401,7 +2408,8 @@
               <button
                 type="button"
                 onclick={nextStep}
-                class="w-full max-w-[450px] mx-auto block bg-[#124476] hover:bg-[#46c2e8] text-white px-[19px] py-[18px] rounded-[50px] font-semibold transition-colors text-[18px] h-[62px]"
+                class="w-full max-w-[450px] mx-auto block text-white px-[24px] py-[20px] rounded-[16px] font-bold transition-all duration-300 text-[18px] h-[64px] hover:scale-105 hover:shadow-2xl"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);"
               >
                 Continue →
               </button>
@@ -2415,7 +2423,7 @@
           <!-- Driver Label (for 2nd, 3rd driver, etc.) -->
           {#if currentDriverIndex > 0}
             <div class="text-center mb-6">
-              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+              <p class="text-[14px] font-bold uppercase tracking-wider" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 {currentDriverIndex === 1 ? '2ND DRIVER' : currentDriverIndex === 2 ? '3RD DRIVER' : `${currentDriverIndex + 1}TH DRIVER`}
               </p>
             </div>
@@ -2490,7 +2498,8 @@
               <button
                 type="button"
                 onclick={nextStep}
-                class="w-full max-w-[450px] mx-auto block bg-[#124476] hover:bg-[#46c2e8] text-white px-[19px] py-[18px] rounded-[50px] font-semibold transition-colors text-[18px] h-[62px]"
+                class="w-full max-w-[450px] mx-auto block text-white px-[24px] py-[20px] rounded-[16px] font-bold transition-all duration-300 text-[18px] h-[64px] hover:scale-105 hover:shadow-2xl"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);"
               >
                 Continue →
               </button>
@@ -2503,13 +2512,13 @@
           <!-- Driver Label (for 2nd, 3rd driver, etc.) -->
           {#if currentDriverIndex > 0}
             <div class="text-center mb-4">
-              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+              <p class="text-[14px] font-bold uppercase tracking-wider" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 {currentDriverIndex === 1 ? '2ND DRIVER' : currentDriverIndex === 2 ? '3RD DRIVER' : `${currentDriverIndex + 1}TH DRIVER`}
               </p>
             </div>
           {/if}
           
-          <h1 class="text-[36px] font-bold text-[#000e1b] mb-8">
+          <h1 class="text-[36px] font-bold text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) mb-8">
             Birthday
           </h1>
 
@@ -2532,7 +2541,7 @@
                         const target = e.target as HTMLInputElement;
                         birthdayMonth = validateMonth(target.value);
                       }}
-                      class="w-full text-left text-base font-medium text-[#000e1b] border-none outline-none focus:outline-none bg-transparent pt-5 pb-0"
+                      class="w-full text-left text-base font-medium text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) border-none outline-none focus:outline-none bg-transparent pt-5 pb-0"
                     />
                   </div>
                 </div>
@@ -2556,7 +2565,7 @@
                         const target = e.target as HTMLInputElement;
                         birthdayDay = validateDay(target.value);
                       }}
-                      class="w-full text-left text-base font-medium text-[#000e1b] border-none outline-none focus:outline-none bg-transparent pt-5 pb-0"
+                      class="w-full text-left text-base font-medium text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) border-none outline-none focus:outline-none bg-transparent pt-5 pb-0"
                     />
                   </div>
                 </div>
@@ -2580,7 +2589,7 @@
                         const target = e.target as HTMLInputElement;
                         birthdayYear = validateYear(target.value);
                       }}
-                      class="w-full text-left text-base font-medium text-[#000e1b] border-none outline-none focus:outline-none bg-transparent pt-5 pb-0"
+                      class="w-full text-left text-base font-medium text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) border-none outline-none focus:outline-none bg-transparent pt-5 pb-0"
                     />
                   </div>
                 </div>
@@ -2610,7 +2619,7 @@
           <!-- Driver Label (for 2nd, 3rd driver, etc.) -->
           {#if currentDriverIndex > 0}
             <div class="text-center mb-6">
-              <p class="text-[#47c2e8] text-[14px] font-semibold uppercase tracking-wider">
+              <p class="text-[14px] font-bold uppercase tracking-wider" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 {currentDriverIndex === 1 ? '2ND DRIVER' : currentDriverIndex === 2 ? '3RD DRIVER' : `${currentDriverIndex + 1}TH DRIVER`}
               </p>
             </div>
@@ -2665,24 +2674,26 @@
                 bind:value={firstName}
                 placeholder="e.g. John"
                 required
-                class="name-input w-full h-[64px] px-5 text-[16px] leading-6 border-none rounded-[2px] outline-none appearance-none text-[#124476] font-['Poppins',sans-serif]"
-                style="background: #fff; box-shadow: inset 0 0 0 1px #dcdcdc, 0 1px 2px 0 rgba(18,68,118,0.1); margin: 0; padding: 28px 20px 12px;"
+                class="name-input w-full h-[68px] px-5 text-[16px] leading-6 border-2 rounded-[12px] outline-none appearance-none text-[#2d3748] font-['Poppins',sans-serif]"
+                style="background: #ffffff; border-color: #e2e8f0; margin: 0; padding: 28px 20px 12px; transition: all 0.3s ease;"
                 onfocus={(e) => { 
                   firstNameFocused = true;
-                  (e.target as HTMLInputElement).style.boxShadow = 'inset 0 0 0 1px #124476, 0 4px 8px 0 rgba(18,68,118,0.1)';
+                  (e.target as HTMLInputElement).style.borderColor = '#667eea';
+                  (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                 }}
                 onblur={(e) => { 
                   firstNameFocused = false;
-                  (e.target as HTMLInputElement).style.boxShadow = 'inset 0 0 0 1px #dcdcdc, 0 1px 2px 0 rgba(18,68,118,0.1)';
+                  (e.target as HTMLInputElement).style.borderColor = '#e2e8f0';
+                  (e.target as HTMLInputElement).style.boxShadow = 'none';
                 }}
                 onmouseenter={(e) => {
                   if (document.activeElement !== e.target) {
-                    (e.target as HTMLInputElement).style.boxShadow = 'inset 0 0 0 1px #666, 0 1px 2px 0 rgba(18,68,118,0.1)';
+                    (e.target as HTMLInputElement).style.borderColor = '#cbd5e0';
                   }
                 }}
                 onmouseleave={(e) => {
                   if (document.activeElement !== e.target) {
-                    (e.target as HTMLInputElement).style.boxShadow = 'inset 0 0 0 1px #dcdcdc, 0 1px 2px 0 rgba(18,68,118,0.1)';
+                    (e.target as HTMLInputElement).style.borderColor = '#e2e8f0';
                   }
                 }}
               />
@@ -2737,7 +2748,8 @@
               <button
                 type="button"
                 onclick={nextStep}
-                class="w-full max-w-[450px] mx-auto block bg-[#124476] hover:bg-[#46c2e8] text-white px-[19px] py-[18px] rounded-[50px] font-semibold transition-colors text-[18px] h-[62px]"
+                class="w-full max-w-[450px] mx-auto block text-white px-[24px] py-[20px] rounded-[16px] font-bold transition-all duration-300 text-[18px] h-[64px] hover:scale-105 hover:shadow-2xl"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);"
               >
                 Continue →
               </button>
@@ -2913,7 +2925,8 @@
               <button
                 type="button"
                 onclick={nextStep}
-                class="w-full max-w-[450px] mx-auto block bg-[#124476] hover:bg-[#46c2e8] text-white px-[19px] py-[18px] rounded-[50px] font-semibold transition-colors text-[18px] h-[62px]"
+                class="w-full max-w-[450px] mx-auto block text-white px-[24px] py-[20px] rounded-[16px] font-bold transition-all duration-300 text-[18px] h-[64px] hover:scale-105 hover:shadow-2xl"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);"
               >
                 Get My Quotes →
               </button>
@@ -2925,7 +2938,7 @@
       {:else if currentStep === 13}
         <div class="max-w-[1140px] mx-auto px-4">
           <div class="text-center mb-12">
-            <h1 class="text-[36px] font-bold text-[#000e1b] mb-4">
+            <h1 class="text-[36px] font-bold text-transparent bg-clip-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) mb-4">
               Click at least TWO quotes to compare and save!
             </h1>
             <p class="text-lg text-[#858f97] mb-8">
@@ -2939,7 +2952,16 @@
                 <a 
                   href={ad.clickUrl}
                   target="_blank"
-                  class="bg-white border-2 border-[#dde0e4] rounded-lg p-6 hover:border-[#47c2e8] hover:shadow-lg transition-all no-underline"
+                  class="bg-white border-2 border-[#e2e8f0] rounded-2xl p-8 transition-all duration-300 no-underline hover:scale-105"
+                  style="box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);"
+                  onmouseenter={(e) => {
+                    e.currentTarget.style.borderColor = '#667eea';
+                    e.currentTarget.style.boxShadow = '0 12px 24px rgba(102, 126, 234, 0.3)';
+                  }}
+                  onmouseleave={(e) => {
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+                  }}
                 >
                   <!-- Insurance Company Logo -->
                   <div class="flex items-center justify-center mb-4 h-16">
@@ -2963,9 +2985,9 @@
                     {/each}
                   </ul>
                   
-                  <!-- CTA Button -->
+                  <!-- Modern CTA Button -->
                   <div class="text-center">
-                    <span class="inline-block bg-[#47c2e8] text-white px-8 py-3 rounded-lg font-semibold">
+                    <span class="inline-block text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
                       View Quote
                     </span>
                   </div>
@@ -2974,8 +2996,8 @@
             </div>
           {:else}
             <div class="text-center py-12">
-              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#47c2e8]"></div>
-              <p class="text-[#858f97] mt-4">Loading your personalized quotes...</p>
+              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-4" style="border-color: transparent; border-bottom-color: #667eea;"></div>
+              <p class="mt-4 font-semibold" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Loading your personalized quotes...</p>
             </div>
           {/if}
         </div>
@@ -2993,7 +3015,7 @@
 </div>
 
 <style>
-  /* Tiempos Headline Font */
+  /* Modern Tiempos Headline Font */
   @font-face {
     font-family: 'Tiempos Headline';
     src: url('/fonts/TiemposHeadline-Medium.otf') format('opentype');
@@ -3001,12 +3023,12 @@
     font-style: normal;
   }
   
-  /* Bootstrap Container */
+  /* Modern Container */
   .container {
     margin-left: auto;
     margin-right: auto;
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 20px;
+    padding-right: 20px;
     width: 100%;
   }
   
@@ -3034,103 +3056,138 @@
     }
   }
   
-  /* Question Headings */
+  /* Modern Question Headings with Gradient */
   h1 {
-    font-family: 'Tiempos Headline', Georgia, serif;
-    font-weight: 300;
-    font-size: 36px;
-    color: #124476;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     text-align: center;
+    letter-spacing: -0.5px;
   }
 
   h2 {
-    font-family: 'Tiempos Headline', Georgia, serif;
-    font-weight: 300;
-    font-size: 27px;
-    color: #124476;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     text-align: center;
+    letter-spacing: -0.3px;
   }
   
-  /* Simple Full-Width Buttons */
+  /* Modern Full-Width Buttons with Rounded Corners */
   .simple-option {
     width: 100%;
-    padding: 15px 30px;
-    background-color: #e7e7e7;
-    color: #124476;
+    padding: 18px 30px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: #2d3748;
     font-family: 'Poppins', sans-serif;
     font-size: 16px;
     font-weight: 600;
     text-align: center;
-    border: none;
-    border-radius: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .simple-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: left 0.3s ease;
+    z-index: -1;
   }
   
   .simple-option:hover {
-    background-color: #46c2e8;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(102, 126, 234, 0.4);
   }
   
   .simple-option.active-simple {
-    background-color: #46c2e8;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    border-color: #764ba2;
+    box-shadow: 0 8px 15px rgba(102, 126, 234, 0.4);
   }
   
   .simple-option-gray {
     width: 100%;
-    padding: 15px 30px;
-    background-color: #e7e7e7;
-    color: #124476;
+    padding: 18px 30px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: #2d3748;
     font-family: 'Poppins', sans-serif;
     font-size: 16px;
     font-weight: 600;
     text-align: center;
-    border: none;
-    border-radius: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
   }
   
   .simple-option-gray:hover {
-    background-color: #46c2e8;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(102, 126, 234, 0.4);
   }
   
   .simple-option-gray.active-simple-gray {
-    background-color: #46c2e8;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    border-color: #764ba2;
+    box-shadow: 0 8px 15px rgba(102, 126, 234, 0.4);
   }
   
-  /* Grid Card Options (Year, Make, Model) */
+  /* Modern Grid Card Options with Shadows */
   .option-card {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: 20px;
     min-width: 100px;
-    height: 72px;
-    border: none;
-    border-radius: 0;
-    background-color: #e7e7e7;
-    color: #124476;
+    height: 80px;
+    border: 2px solid transparent;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    color: #2d3748;
     font-size: 18px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
   
   .option-card:hover {
-    background-color: #46c2e8;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
   }
   
   .option-card.active {
-    background-color: #46c2e8;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    border-color: #764ba2;
+    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
+    transform: scale(1.05);
   }
   
   @media (max-width: 575px) {
@@ -3139,9 +3196,9 @@
     }
   }
   
-  /* Step 10 Input Field Styles */
+  /* Modern Input Field Styles */
   .input-container input:focus::placeholder {
-    color: rgba(18,68,118,0.2);
+    color: rgba(102, 126, 234, 0.3);
   }
   
   .input-container input::placeholder {
@@ -3149,16 +3206,16 @@
   }
   
   .input-container label {
-    transition: all 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
-  /* Label animation states */
+  /* Modern Label Animation States */
   .label-center {
     top: 50%;
     transform: translateY(-50%);
     font-size: 16px;
     line-height: 24px;
-    color: rgba(18,68,118,0.5);
+    color: rgba(102, 126, 234, 0.6);
   }
   
   .label-float {
@@ -3166,7 +3223,8 @@
     transform: translateY(0);
     font-size: 12px;
     line-height: 16px;
-    color: rgba(18,68,118,0.5);
+    color: rgba(102, 126, 234, 0.8);
+    font-weight: 600;
   }
 </style>
 

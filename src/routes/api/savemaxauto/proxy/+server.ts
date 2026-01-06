@@ -9,10 +9,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     // Get or create session ID
     const sid = sessionId || cookies.get('savemaxauto_sid') || crypto.randomUUID();
     
-    // Override refererUrl for create-session to mask localhost
-    if (endpoint === '/api/v1/create-session' && payload) {
-      payload.refererUrl = 'https://savemaxauto.com/form/';
-    }
+    // Note: refererUrl is now set by the client with affiliate tracking params
+    // Do NOT override it here - it contains policysidekick.com with c, source, pcid, pmclid
     
     // Build request to SaveMaxAuto API
     const apiUrl = `https://savemaxauto.com${endpoint}`;
